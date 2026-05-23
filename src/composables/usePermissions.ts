@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { Capacitor } from '@capacitor/core'
+import { MediaAccessPlugin } from '@/plugins/mediaAccess'
 
 export function usePermissions() {
   const hasPermission = ref(false)
@@ -7,38 +8,34 @@ export function usePermissions() {
 
   async function requestPermissions(): Promise<boolean> {
     if (!Capacitor.isNativePlatform()) {
-      // Web 环境下模拟授权
       hasPermission.value = true
       return true
     }
 
     try {
-      // 通过 @capacitor-community/media 插件请求权限
-      const { Media } = await import('@capacitor-community/media')
-      const result = await Media.getMedias({ quantity: 1 })
-      if (result.medias) {
+      // Check existing permission first
+      const checkResult = await MediaAccessPlugin.checkPermissions()
+      if (checkResult.granted) {
         hasPermission.value = true
         return true
       }
-    } catch (e: unknown) {
-      const error = e as { message?: string }
-      if (error.message?.includes('denied') || error.message?.includes('permission')) {
-        permissionDenied.value = true
-      }
-      // 权限可能未授予，尝试请求
-      try {
-        const { Media } = await import('@capacitor-community/media')
-        await Media.getAlbums()
-        hasPermission.value = true
-        return true
-      } catch {
-        permissionDenied.value = true
-        hasPermission.value = false
-        return false
-      }
-    }
 
-    return false
+      // Request permission via our custom plugin
+      const reqResult = await MediaAccessPlugin.requestPermissions()
+      if (reqResult.granted) {
+        hasPermission.value = true
+        return true
+      }
+
+      permissionDenied.value = true
+      hasPermission.value = false
+      return false
+    } catch (e) {
+      console.error('Permission request failed:', e)
+      permissionDenied.value = true
+      hasPermission.value = false
+      return false
+    }
   }
 
   return {

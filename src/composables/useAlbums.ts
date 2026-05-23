@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { Capacitor } from '@capacitor/core'
 import type { Album } from '@/types/photo'
+import { MediaAccessPlugin } from '@/plugins/mediaAccess'
 
 export function useAlbums() {
   const albums = ref<Album[]>([])
@@ -14,14 +15,13 @@ export function useAlbums() {
         return
       }
 
-      const { Media } = await import('@capacitor-community/media')
-      const result = await Media.getAlbums()
+      const result = await MediaAccessPlugin.getAlbums()
 
       albums.value = (result.albums ?? []).map(a => ({
-        id: a.identifier ?? a.name ?? '',
+        id: a.id ?? '',
         name: a.name ?? '未知相册',
-        count: 0,
-        coverUri: '',
+        count: a.count ?? 0,
+        coverUri: a.coverUri ?? '',
       }))
     } finally {
       loading.value = false

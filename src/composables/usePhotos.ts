@@ -2,8 +2,7 @@ import { ref, computed } from 'vue'
 import { Capacitor } from '@capacitor/core'
 import type { Photo } from '@/types/photo'
 import type { CleanupConfig } from '@/store/cleanupStore'
-
-// On Android, MediaAsset.identifier IS the file path
+import { MediaAccessPlugin } from '@/plugins/mediaAccess'
 
 export function usePhotos() {
   const photos = ref<Photo[]>([])
@@ -18,37 +17,18 @@ export function usePhotos() {
     loading.value = true
     try {
       if (!Capacitor.isNativePlatform()) {
-        // Web 环境模拟数据
         photos.value = generateMockPhotos(30)
         hasMore.value = false
         return
       }
 
-      const { Media } = await import('@capacitor-community/media')
-      const result = await Media.getMedias({
-        quantity: quantity + offset, // Plugin doesn't support offset; request more and slice
-        sort: [{ key: 'creationDate', ascending: false }],
-        types: 'photos',
+      const result = await MediaAccessPlugin.getPhotos({
+        quantity,
+        offset,
+        ascending: false,
       })
 
-      const allMedias = result.medias ?? []
-      const sliced = allMedias.slice(offset)
-
-      const mapped: Photo[] = sliced.map((m, i) => ({
-        id: m.identifier ?? `photo-${offset + i}`,
-        uri: m.identifier ?? '',
-        webPath: m.data
-          ? `data:image/jpeg;base64,${m.data}`
-          : (m.identifier ? Capacitor.convertFileSrc(m.identifier) : ''),
-        filename: `photo_${offset + i}.jpg`,
-        albumId: '',
-        albumName: '',
-        width: 0,
-        height: 0,
-        size: 0,
-        createdAt: m.creationDate ? new Date(m.creationDate).getTime() : Date.now(),
-        modifiedAt: Date.now(),
-      }))
+      const mapped: Photo[] = (result.photos ?? []).map(p => mapMediaPhoto(p))
 
       if (offset === 0) {
         photos.value = mapped
@@ -62,9 +42,6 @@ export function usePhotos() {
     }
   }
 
-  /**
-   * Load photos based on cleanup config (album filter, sort order, batch size)
-   */
   async function loadPhotosWithConfig(config: CleanupConfig): Promise<void> {
     loading.value = true
     try {
@@ -76,35 +53,26 @@ export function usePhotos() {
         return
       }
 
-      const { Media } = await import('@capacitor-community/media')
-
-      // Determine sort ascending based on config
       const ascending = config.sortOrder === 'oldest'
 
       if (config.scope === 'album' && config.albumIds.length > 0) {
-        // Load photos from specified albums
         const allPhotos: Photo[] = []
         for (const albumId of config.albumIds) {
-          const result = await Media.getMedias({
+          const result = await MediaAccessPlugin.getPhotos({
             quantity: config.batchSize,
-            sort: [{ key: 'creationDate', ascending }],
-            types: 'photos',
-            albumIdentifier: albumId,
+            ascending,
+            albumId,
           })
-          const medias = result.medias ?? []
-          const mapped = medias.map((m, i) => mapMedia(m, allPhotos.length + i))
+          const mapped = (result.photos ?? []).map(p => mapMediaPhoto(p))
           allPhotos.push(...mapped)
         }
         photos.value = applySortOrder(allPhotos, config.sortOrder).slice(0, config.batchSize)
       } else {
-        // All photos
-        const result = await Media.getMedias({
+        const result = await MediaAccessPlugin.getPhotos({
           quantity: config.batchSize,
-          sort: [{ key: 'creationDate', ascending }],
-          types: 'photos',
+          ascending,
         })
-        const medias = result.medias ?? []
-        photos.value = medias.map((m, i) => mapMedia(m, i))
+        photos.value = (result.photos ?? []).map(p => mapMediaPhoto(p))
       }
 
       if (config.sortOrder === 'random') {
@@ -117,21 +85,19 @@ export function usePhotos() {
     }
   }
 
-  function mapMedia(m: any, index: number): Photo {
+  function mapMediaPhoto(p: any): Photo {
     return {
-      id: m.identifier ?? `photo-${index}`,
-      uri: m.identifier ?? '',
-      webPath: m.data
-        ? `data:image/jpeg;base64,${m.data}`
-        : (m.identifier ? Capacitor.convertFileSrc(m.identifier) : ''),
-      filename: `photo_${index}.jpg`,
-      albumId: '',
-      albumName: '',
-      width: 0,
-      height: 0,
-      size: 0,
-      createdAt: m.creationDate ? new Date(m.creationDate).getTime() : Date.now(),
-      modifiedAt: Date.now(),
+      id: p.id ?? '',
+      uri: p.contentUri ?? '',
+      webPath: p.contentUri ? Capacitor.convertFileSrc(p.contentUri) : '',
+      filename: p.filename ?? '',
+      albumId: p.albumId ?? '',
+      albumName: p.albumName ?? '',
+      width: p.width ?? 0,
+      height: p.height ?? 0,
+      size: p.size ?? 0,
+      createdAt: p.dateAdded ?? Date.now(),
+      modifiedAt: p.dateModified ?? Date.now(),
     }
   }
 

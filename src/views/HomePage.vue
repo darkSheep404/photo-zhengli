@@ -68,30 +68,82 @@
       <p class="permission-text">需要存储权限才能读取照片</p>
       <button class="grant-btn" @click="requestPerms">授予权限</button>
     </div>
+
+    <!-- 调试信息 -->
+    <section class="debug-section">
+      <h3 class="section-label" @click="showDebug = !showDebug">🐛 调试信息 {{ showDebug ? '▲' : '▼' }}</h3>
+      <div v-if="showDebug" class="debug-panel glass">
+        <div v-for="(log, i) in debugLogs" :key="i" class="debug-line" :class="log.level">
+          <span class="debug-time">{{ log.time }}</span>
+          <span class="debug-msg">{{ log.msg }}</span>
+        </div>
+      </div>
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { Capacitor } from '@capacitor/core'
 import { usePermissions } from '@/composables/usePermissions'
 import { useAlbums } from '@/composables/useAlbums'
 import { useTheme } from '@/composables/useTheme'
 import { useStats } from '@/composables/useStats'
 
-const { hasPermission, requestPermissions } = usePermissions()
+const { hasPermission, permissionDenied, requestPermissions } = usePermissions()
 const { albums, loadAlbums } = useAlbums()
 const { currentTheme } = useTheme()
 const { stats, formatBytes } = useStats()
 
 const isPixel = computed(() => currentTheme.value === 'pixel')
-
 const totalAlbums = ref(0)
+const showDebug = ref(true)
+
+interface DebugLog {
+  time: string
+  msg: string
+  level: 'info' | 'ok' | 'error'
+}
+const debugLogs = ref<DebugLog[]>([])
+
+function addLog(msg: string, level: DebugLog['level'] = 'info') {
+  const now = new Date()
+  const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`
+  debugLogs.value.push({ time, msg, level })
+}
 
 onMounted(async () => {
-  const granted = await requestPermissions()
-  if (granted) {
+  addLog(`平台: ${Capacitor.getPlatform()}, Native: ${Capacitor.isNativePlatform()}`)
+
+  try {
+    addLog('正在请求存储权限...')
+    const granted = await requestPermissions()
+    if (granted) {
+      addLog('✅ 权限已授予', 'ok')
+    } else {
+      addLog(`❌ 权限被拒绝 (denied=${permissionDenied.value})`, 'error')
+      return
+    }
+  } catch (e: any) {
+    addLog(`❌ 权限请求异常: ${e?.message || e}`, 'error')
+    return
+  }
+
+  try {
+    addLog('正在加载相册列表...')
     await loadAlbums()
     totalAlbums.value = albums.value.length
+    addLog(`✅ 相册加载完成: ${albums.value.length} 个`, 'ok')
+    if (albums.value.length > 0) {
+      albums.value.slice(0, 5).forEach(a => {
+        addLog(`  📁 ${a.name} (${a.count}张, id=${a.id})`)
+      })
+      if (albums.value.length > 5) {
+        addLog(`  ... 还有 ${albums.value.length - 5} 个相册`)
+      }
+    }
+  } catch (e: any) {
+    addLog(`❌ 相册加载失败: ${e?.message || e}`, 'error')
   }
 })
 
@@ -198,4 +250,16 @@ async function requestPerms() {
 }
 .pixel-mode .app-title::after { content: '_'; animation: blink 1s step-end infinite; }
 @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+
+.debug-section { margin-bottom: var(--space-lg); }
+.debug-section .section-label { cursor: pointer; user-select: none; }
+.debug-panel {
+  background: var(--color-surface); border-radius: var(--radius-md); border: 1px solid var(--color-border);
+  padding: var(--space-sm); max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 12px;
+}
+.debug-line { display: flex; gap: var(--space-xs); padding: 2px 0; line-height: 1.4; }
+.debug-line.ok .debug-msg { color: #22c55e; }
+.debug-line.error .debug-msg { color: #ef4444; }
+.debug-time { color: var(--color-text-secondary); flex-shrink: 0; }
+.debug-msg { word-break: break-all; }
 </style>
