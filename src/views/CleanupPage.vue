@@ -26,18 +26,20 @@
       @touchend="onTouchEnd"
       @click="showDetail = true"
     >
-      <div v-if="currentPhoto" class="photo-container">
-        <img
-          :src="currentPhoto.webPath"
-          :alt="currentPhoto.filename"
-          class="main-photo"
-          draggable="false"
-        />
-        <div v-if="currentDecision" class="decision-badge" :class="currentDecision.action">
-          {{ currentDecision.action === 'delete' ? '待删除' : `移动到 ${currentDecision.targetAlbum?.name}` }}
+      <Transition :name="slideDirection" mode="out-in">
+        <div v-if="currentPhoto" :key="currentPhoto.id" class="photo-container">
+          <img
+            :src="currentPhoto.webPath"
+            :alt="currentPhoto.filename"
+            class="main-photo"
+            draggable="false"
+          />
+          <div v-if="currentDecision" class="decision-badge" :class="currentDecision.action">
+            {{ currentDecision.action === 'delete' ? '待删除' : `移动到 ${currentDecision.targetAlbum?.name}` }}
+          </div>
         </div>
-      </div>
-      <div v-else class="empty-state">
+      </Transition>
+      <div v-if="!currentPhoto" class="empty-state">
         <p>没有照片了</p>
       </div>
     </div>
@@ -112,6 +114,7 @@ const showMonthPicker = ref(false)
 const showDetail = ref(false)
 const touchStartX = ref(0)
 const touchStartY = ref(0)
+const slideDirection = ref('slide-left')
 const scanHint = computed(() => {
   const config = store.cleanupConfig
   if (!config) return '加载全部照片'
@@ -144,12 +147,14 @@ function goBack() {
 }
 
 function goToPhoto(index: number) {
+  slideDirection.value = index > currentIndex.value ? 'slide-left' : 'slide-right'
   goToIndex(index)
 }
 
 function handleDelete() {
   if (!currentPhoto.value) return
   store.markDelete(currentPhoto.value)
+  slideDirection.value = 'slide-left'
   nextPhoto()
 }
 
@@ -193,8 +198,10 @@ function onTouchEnd(e: TouchEvent) {
   if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
     e.preventDefault()
     if (dx < 0) {
+      slideDirection.value = 'slide-left'
       nextPhoto()
     } else {
+      slideDirection.value = 'slide-right'
       prevPhoto()
     }
   }
@@ -268,6 +275,33 @@ function formatBytes(bytes: number): string {
   justify-content: center;
   overflow: hidden;
   padding: var(--space-sm);
+  position: relative;
+}
+
+/* Slide transitions */
+.slide-left-enter-active,
+.slide-left-leave-active,
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.slide-left-enter-from {
+  transform: translateX(60px);
+  opacity: 0;
+}
+.slide-left-leave-to {
+  transform: translateX(-60px);
+  opacity: 0;
+}
+
+.slide-right-enter-from {
+  transform: translateX(-60px);
+  opacity: 0;
+}
+.slide-right-leave-to {
+  transform: translateX(60px);
+  opacity: 0;
 }
 
 .photo-container {

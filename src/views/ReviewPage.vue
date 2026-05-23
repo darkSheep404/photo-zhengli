@@ -72,14 +72,17 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCleanupStore } from '@/store/cleanupStore'
 import { trashPhotos } from '@/composables/useMovePhoto'
+import { useStats } from '@/composables/useStats'
 
 const router = useRouter()
 const store = useCleanupStore()
+const { addRecord } = useStats()
 
 const executing = ref(false)
 const showResult = ref(false)
 const deletedCount = ref(0)
 const freedBytes = ref(0)
+const sessionStart = Date.now()
 
 async function executeDelete() {
   executing.value = true
@@ -89,6 +92,16 @@ async function executeDelete() {
     deletedCount.value = uris.length
     freedBytes.value = bytes
     showResult.value = true
+
+    // 写入统计记录
+    addRecord({
+      date: new Date().toLocaleDateString('zh-CN'),
+      deletedCount: uris.length,
+      movedCount: store.moveList.length,
+      freedBytes: bytes,
+      durationMs: Date.now() - sessionStart,
+    })
+
     // 清理已删除的条目
     store.decisions = store.decisions.filter(d => d.action !== 'delete')
   } catch (e) {
