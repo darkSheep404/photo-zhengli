@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core'
 import type { Photo } from '@/types/photo'
 import type { CleanupConfig } from '@/store/cleanupStore'
 import { MediaAccessPlugin } from '@/plugins/mediaAccess'
+import { useReviewedPhotos } from '@/composables/useReviewedPhotos'
 
 export function usePhotos() {
   const photos = ref<Photo[]>([])
@@ -55,7 +56,33 @@ export function usePhotos() {
 
       const ascending = config.sortOrder === 'oldest'
 
-      if (config.scope === 'album' && config.albumIds.length > 0) {
+      if (config.scope === 'reviewed') {
+        // 从已保留照片中加载：分页获取设备照片，过滤出已保留的
+        const { getReviewedIds } = useReviewedPhotos()
+        const reviewedIds = getReviewedIds()
+        const collected: Photo[] = []
+        let offset = 0
+        const pageSize = 200
+
+        while (collected.length < config.batchSize) {
+          const result = await MediaAccessPlugin.getPhotos({
+            quantity: pageSize,
+            offset,
+            ascending,
+          })
+          const mapped = (result.photos ?? []).map(p => mapMediaPhoto(p))
+          if (mapped.length === 0) break
+
+          for (const photo of mapped) {
+            if (reviewedIds.has(photo.id)) {
+              collected.push(photo)
+              if (collected.length >= config.batchSize) break
+            }
+          }
+          offset += pageSize
+        }
+        photos.value = applySortOrder(collected, config.sortOrder)
+      } else if (config.scope === 'album' && config.albumIds.length > 0) {
         const allPhotos: Photo[] = []
         for (const albumId of config.albumIds) {
           const result = await MediaAccessPlugin.getPhotos({

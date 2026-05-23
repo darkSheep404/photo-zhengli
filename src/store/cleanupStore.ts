@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import type { Photo, PhotoDecision, Album } from '@/types/photo'
 
 export interface CleanupConfig {
-  scope: 'all' | 'album'
+  scope: 'all' | 'album' | 'reviewed'
   albumIds: string[]
   sortOrder: 'oldest' | 'newest' | 'random'
   batchSize: number

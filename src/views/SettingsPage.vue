@@ -54,6 +54,15 @@
         </div>
       </div>
 
+      <!-- 数据管理 -->
+      <div class="setting-section">
+        <h3 class="section-label">数据管理</h3>
+        <div class="setting-item clickable" @click="handleClearReviewed">
+          <span>清空已保留照片记录</span>
+          <span class="setting-value">{{ reviewedCount }} 张</span>
+        </div>
+      </div>
+
       <!-- 关于 -->
       <div class="setting-section">
         <h3 class="section-label">关于</h3>
@@ -73,9 +82,20 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useTheme } from '@/composables/useTheme'
+import { useReviewedPhotos } from '@/composables/useReviewedPhotos'
 
 const { currentTheme, setTheme } = useTheme()
+const { getReviewedCount, clearReviewed } = useReviewedPhotos()
 const sortBy = ref('date-desc')
+const reviewedCount = ref(getReviewedCount())
+
+function handleClearReviewed() {
+  if (reviewedCount.value === 0) return
+  if (confirm(`确定清空 ${reviewedCount.value} 张已保留照片的记录？\n清空后这些照片将重新出现在清理列表中。`)) {
+    clearReviewed()
+    reviewedCount.value = 0
+  }
+}
 </script>
 
 <style scoped>
@@ -242,6 +262,15 @@ const sortBy = ref('date-desc')
 
 .setting-item + .setting-item {
   margin-top: 1px;
+}
+
+.setting-item.clickable {
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.setting-item.clickable:active {
+  background: var(--color-surface-2);
 }
 
 .setting-value {

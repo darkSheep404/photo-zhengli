@@ -33,6 +33,19 @@
           </div>
           <span v-if="scope === 'album'" class="check">✓</span>
         </button>
+        <button
+          class="option-card"
+          :class="{ active: scope === 'reviewed', disabled: getReviewedCount() === 0 }"
+          :disabled="getReviewedCount() === 0"
+          @click="scope = 'reviewed'"
+        >
+          <span class="option-icon">✅</span>
+          <div class="option-info">
+            <span class="option-title">已保留照片</span>
+            <span class="option-desc">重新审阅之前保留的 {{ getReviewedCount() }} 张</span>
+          </div>
+          <span v-if="scope === 'reviewed'" class="check">✓</span>
+        </button>
       </div>
     </section>
 
@@ -100,6 +113,9 @@
         <span v-if="scope === 'album' && selectedAlbums.size > 0" class="start-info">
           ({{ selectedAlbumsCount }} 张照片)
         </span>
+        <span v-if="scope === 'reviewed'" class="start-info">
+          ({{ getReviewedCount() }} 张已保留)
+        </span>
       </button>
     </div>
   </div>
@@ -110,12 +126,14 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAlbums } from '@/composables/useAlbums'
 import { useCleanupStore } from '@/store/cleanupStore'
+import { useReviewedPhotos } from '@/composables/useReviewedPhotos'
 
 const router = useRouter()
 const { albums, loadAlbums } = useAlbums()
 const store = useCleanupStore()
+const { getReviewedCount } = useReviewedPhotos()
 
-const scope = ref<'all' | 'album'>('all')
+const scope = ref<'all' | 'album' | 'reviewed'>('all')
 const selectedAlbums = ref(new Set<string>())
 const sortOrder = ref<'oldest' | 'newest' | 'random'>('oldest')
 const batchSize = ref(50)
@@ -221,6 +239,11 @@ function startCleanup() {
 
 .option-card:active {
   transform: scale(0.98);
+}
+
+.option-card.disabled {
+  opacity: 0.4;
+  pointer-events: none;
 }
 
 .option-icon {

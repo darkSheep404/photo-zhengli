@@ -74,10 +74,12 @@ import { useRouter } from 'vue-router'
 import { useCleanupStore } from '@/store/cleanupStore'
 import { trashPhotos } from '@/composables/useMovePhoto'
 import { useStats } from '@/composables/useStats'
+import { useReviewedPhotos } from '@/composables/useReviewedPhotos'
 
 const router = useRouter()
 const store = useCleanupStore()
 const { addRecord } = useStats()
+const { addReviewedIds } = useReviewedPhotos()
 
 const executing = ref(false)
 const showResult = ref(false)
@@ -106,6 +108,9 @@ async function executeDelete() {
 
     // 清理已删除的条目
     store.decisions = store.decisions.filter(d => d.action !== 'delete')
+
+    // 持久化已审阅的照片 ID（包括保留、移动、删除）
+    saveReviewedIds()
   } catch (e) {
     console.error('删除失败:', e)
   } finally {
@@ -114,14 +119,22 @@ async function executeDelete() {
 }
 
 function goHome() {
+  saveReviewedIds()
   store.clearAll()
   router.push('/')
 }
 
 function continueCleanup() {
-  // 保留 cleanupConfig，只清除 decisions
+  saveReviewedIds()
   store.decisions = []
   router.push('/cleanup/session')
+}
+
+function saveReviewedIds() {
+  const allIds = store.decisions.map(d => d.photo.id)
+  if (allIds.length > 0) {
+    addReviewedIds(allIds)
+  }
 }
 
 function formatBytes(bytes: number): string {
