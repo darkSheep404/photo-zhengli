@@ -1,6 +1,10 @@
 <template>
-  <div class="thumbnail-strip" ref="stripRef">
-    <div class="strip-inner" :style="{ transform: `translateX(${scrollOffset}px)` }">
+  <div class="thumbnail-strip" ref="stripRef"
+    @touchstart="onStripTouchStart"
+    @touchmove="onStripTouchMove"
+    @touchend="onStripTouchEnd"
+  >
+    <div class="strip-inner" :style="{ transform: `translateX(${scrollOffset}px)`, transition: isDragging ? 'none' : 'transform var(--transition-normal)' }">
       <div
         v-for="(photo, index) in photos"
         :key="photo.id"
@@ -16,6 +20,7 @@
         <img :src="photo.webPath" :alt="photo.filename" loading="lazy" />
         <span v-if="getDecision(photo.id)?.action === 'delete'" class="thumb-label delete">待删除</span>
         <span v-else-if="getDecision(photo.id)?.action === 'keep'" class="thumb-label keep">保留</span>
+        <span v-else-if="getDecision(photo.id)?.action === 'move'" class="thumb-label move">已分类</span>
       </div>
     </div>
   </div>
@@ -37,6 +42,9 @@ defineEmits<{
 
 const stripRef = ref<HTMLElement>()
 const scrollOffset = ref(0)
+const isDragging = ref(false)
+const dragStartX = ref(0)
+const dragStartOffset = ref(0)
 const THUMB_WIDTH = 68 // 60px thumb + 8px gap
 
 watch(() => props.currentIndex, scrollToActive)
@@ -46,11 +54,37 @@ onMounted(() => {
 })
 
 function scrollToActive() {
-  if (!stripRef.value) return
+  if (!stripRef.value || isDragging.value) return
   const containerWidth = stripRef.value.clientWidth
   const targetX = props.currentIndex * THUMB_WIDTH
   const center = containerWidth / 2 - THUMB_WIDTH / 2
   scrollOffset.value = Math.min(0, center - targetX)
+}
+
+function getMinOffset(): number {
+  if (!stripRef.value) return 0
+  const totalWidth = props.photos.length * THUMB_WIDTH
+  const containerWidth = stripRef.value.clientWidth
+  return Math.min(0, containerWidth - totalWidth)
+}
+
+function onStripTouchStart(e: TouchEvent) {
+  isDragging.value = true
+  dragStartX.value = e.touches[0].clientX
+  dragStartOffset.value = scrollOffset.value
+}
+
+function onStripTouchMove(e: TouchEvent) {
+  if (!isDragging.value) return
+  e.preventDefault()
+  const dx = e.touches[0].clientX - dragStartX.value
+  const newOffset = dragStartOffset.value + dx
+  // Clamp within bounds
+  scrollOffset.value = Math.max(getMinOffset(), Math.min(0, newOffset))
+}
+
+function onStripTouchEnd() {
+  isDragging.value = false
 }
 </script>
 
@@ -136,5 +170,9 @@ function scrollToActive() {
 
 .thumb-label.keep {
   background: rgba(52, 199, 89, 0.85);
+}
+
+.thumb-label.move {
+  background: rgba(var(--color-primary-rgb), 0.85);
 }
 </style>

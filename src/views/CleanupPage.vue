@@ -41,7 +41,7 @@
             draggable="false"
           />
           <div v-if="currentDecision" class="decision-badge" :class="currentDecision.action">
-            {{ currentDecision.action === 'delete' ? '待删除' : currentDecision.action === 'keep' ? '保留' : `移动到 ${currentDecision.targetAlbum?.name}` }}
+            {{ currentDecision.action === 'delete' ? '待删除' : currentDecision.action === 'keep' ? '保留' : `已分类 · ${currentDecision.targetAlbum?.name}` }}
           </div>
         </div>
       </Transition>
@@ -191,6 +191,10 @@ function goReview() {
 }
 
 function goToPhoto(index: number) {
+  // 跳转时，当前照片（如果向前跳）标记为保留
+  if (index > currentIndex.value && currentPhoto.value) {
+    store.markKeep(currentPhoto.value)
+  }
   slideDirection.value = index > currentIndex.value ? 'slide-left' : 'slide-right'
   goToIndex(index)
 }
