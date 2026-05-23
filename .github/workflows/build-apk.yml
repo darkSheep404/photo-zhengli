@@ -43,11 +43,15 @@ jobs:
       - name: Build debug APK
         working-directory: android
         run: chmod +x gradlew && ./gradlew assembleDebug
+        env:
+          VERSION_CODE: ${{ github.run_number }}
 
       - name: Build release APK
         if: startsWith(github.ref, 'refs/tags/v')
         working-directory: android
         run: ./gradlew assembleRelease
+        env:
+          VERSION_CODE: ${{ github.run_number }}
 
       - name: Upload debug APK artifact
         uses: actions/upload-artifact@v4
