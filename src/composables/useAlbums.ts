@@ -21,7 +21,7 @@ export function useAlbums() {
         id: a.id ?? '',
         name: a.name ?? '未知相册',
         count: a.count ?? 0,
-        coverUri: a.coverUri ?? '',
+        coverUri: a.coverUri ? Capacitor.convertFileSrc(a.coverUri) : '',
       }))
     } finally {
       loading.value = false

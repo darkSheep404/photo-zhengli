@@ -8,8 +8,8 @@
       {{ displayMonth }}
       <span class="filter-label">| 筛选 ›</span>
     </button>
-    <span class="delete-count" :class="{ active: deleteCount > 0 }">
-      待删除({{ deleteCount }})
+    <span class="delete-count" :class="{ active: deleteCount > 0 }" @click="$emit('review')">
+      待删除({{ deleteCount }}) ›
     </span>
   </div>
 </template>
@@ -27,6 +27,7 @@ const props = defineProps<{
 defineEmits<{
   back: []
   monthClick: []
+  review: []
 }>()
 
 const displayMonth = computed(() => {
@@ -94,6 +95,11 @@ const displayMonth = computed(() => {
   padding: var(--space-xs) var(--space-sm);
   border-radius: var(--radius-full);
   transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.delete-count:active {
+  opacity: 0.7;
 }
 
 .delete-count.active {

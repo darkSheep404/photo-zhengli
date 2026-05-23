@@ -33,9 +33,22 @@
 - [x] 历史清理记录（localStorage 持久化）
 - [x] 概览仪表盘首页（设备信息+快捷操作+最近记录）
 - [x] 扫描加载动画（spinner + 配置信息提示）
+- [x] 自定义 MediaAccessPlugin 替代 @capacitor-community/media（getPhotos/getAlbums/权限管理）
+- [x] Android 13+ READ_MEDIA_IMAGES 权限适配
+- [x] Bundle-based 分页查询（兼容 HarmonyOS）+ cursor fallback
+- [x] 相册封面预览图正确显示（content:// URI 转换）
+- [x] 照片移动到相册功能（Android 11+ createWriteRequest 权限处理）
+- [x] 清理记录包含具体时间（不仅仅是日期）
+- [x] 滑动跳过的照片自动标记"保留"（不覆盖已有的待删除标记）
+- [x] 返回键弹出确认对话框（放弃清理返回首页）
+- [x] 点击"待删除"进入批量审核页
+- [x] 统计页展示保留照片数量和分类（移动相册）数量
+- [x] 清理完成后可选择继续清理下一批（保留配置）
 
 ### 🚧 待实现
 
+- [ ] 删除照片实际放入系统回收站（当前 trashPhotos 行为待验证，可能需要 MediaStore.createTrashRequest）
+- [ ] 保留的照片在下一次清理中跳过（需持久化已审阅照片 ID）
 - [ ] 照片库自动扫描（打开 app 自动索引所有照片）
 - [ ] 扫描暂停/恢复（保存扫描进度，下次继续）
 - [ ] 上次扫描时间展示
@@ -113,6 +126,18 @@ GitHub Actions 自动化流程：
 ## 开发团队
 
 个人项目，使用 AI 辅助开发。
+
+## 测试截图
+
+### batch2 - 首页相册加载
+验证自定义 MediaAccessPlugin 在 HarmonyOS 4.2 上正确加载相册列表（含封面、数量）。
+
+### batch3 - 清理页功能验证
+- 清理页成功加载 50 张照片，大图浏览正常
+- 调试信息确认 Bundle-based 分页查询生效
+- 发现相册封面预览裂图（已修复：convertFileSrc）
+- 发现点击相册移动无反应（已修复：Android 11+ 写权限处理）
+- 发现系统回收站确认弹窗（待验证实际行为）
 
 ## 反馈与贡献
 

@@ -4,6 +4,7 @@ export interface CleanupRecord {
   date: string
   deletedCount: number
   movedCount: number
+  keptCount: number
   freedBytes: number
   durationMs: number
 }
@@ -11,6 +12,7 @@ export interface CleanupRecord {
 export interface StatsData {
   totalDeleted: number
   totalMoved: number
+  totalKept: number
   totalFreedBytes: number
   totalDurationMs: number
   records: CleanupRecord[]
@@ -23,7 +25,7 @@ function loadStats(): StatsData {
     const raw = localStorage.getItem(STATS_KEY)
     if (raw) return JSON.parse(raw)
   } catch {}
-  return { totalDeleted: 0, totalMoved: 0, totalFreedBytes: 0, totalDurationMs: 0, records: [] }
+  return { totalDeleted: 0, totalMoved: 0, totalKept: 0, totalFreedBytes: 0, totalDurationMs: 0, records: [] }
 }
 
 function saveStats(data: StatsData) {
@@ -36,6 +38,7 @@ export function useStats() {
   function addRecord(record: CleanupRecord) {
     stats.value.totalDeleted += record.deletedCount
     stats.value.totalMoved += record.movedCount
+    stats.value.totalKept += (record.keptCount || 0)
     stats.value.totalFreedBytes += record.freedBytes
     stats.value.totalDurationMs += record.durationMs
     stats.value.records.unshift(record)

@@ -18,7 +18,12 @@
       </div>
       <div class="summary-card glass">
         <span class="summary-number">{{ stats.totalMoved }}</span>
-        <span class="summary-label">已归类</span>
+        <span class="summary-label">已分类</span>
+        <span class="summary-unit">张照片</span>
+      </div>
+      <div class="summary-card glass">
+        <span class="summary-number">{{ stats.totalKept || 0 }}</span>
+        <span class="summary-label">已保留</span>
         <span class="summary-unit">张照片</span>
       </div>
       <div class="summary-card glass">
@@ -40,6 +45,7 @@
           <div class="record-date">
             <span class="date-icon">📅</span>
             <span>{{ record.date }}</span>
+            <span v-if="record.durationMs" class="record-duration">⏱ {{ formatDuration(record.durationMs) }}</span>
           </div>
           <div class="record-details">
             <span v-if="record.deletedCount" class="detail-chip danger">
@@ -47,6 +53,9 @@
             </span>
             <span v-if="record.movedCount" class="detail-chip primary">
               📁 {{ record.movedCount }} 张
+            </span>
+            <span v-if="record.keptCount" class="detail-chip success">
+              ✓ 保留 {{ record.keptCount }} 张
             </span>
             <span class="detail-chip">
               💾 {{ formatBytes(record.freedBytes) }}
@@ -170,6 +179,13 @@ const { stats, formatDuration, formatBytes } = useStats()
   font-size: 14px;
 }
 
+.record-duration {
+  margin-left: auto;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-regular);
+}
+
 .record-details {
   display: flex;
   gap: var(--space-sm);
@@ -191,5 +207,10 @@ const { stats, formatDuration, formatBytes } = useStats()
 .detail-chip.primary {
   background: rgba(var(--color-primary-rgb), 0.15);
   color: var(--color-primary);
+}
+
+.detail-chip.success {
+  background: rgba(52, 199, 89, 0.15);
+  color: #34C759;
 }
 </style>

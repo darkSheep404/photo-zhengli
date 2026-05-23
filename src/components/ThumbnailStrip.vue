@@ -9,11 +9,13 @@
           active: index === currentIndex,
           'marked-delete': getDecision(photo.id)?.action === 'delete',
           'marked-move': getDecision(photo.id)?.action === 'move',
+          'marked-keep': getDecision(photo.id)?.action === 'keep',
         }"
         @click="$emit('select', index)"
       >
         <img :src="photo.webPath" :alt="photo.filename" loading="lazy" />
-        <span v-if="getDecision(photo.id)?.action === 'delete'" class="thumb-label">待删除</span>
+        <span v-if="getDecision(photo.id)?.action === 'delete'" class="thumb-label delete">待删除</span>
+        <span v-else-if="getDecision(photo.id)?.action === 'keep'" class="thumb-label keep">保留</span>
       </div>
     </div>
   </div>
@@ -110,6 +112,13 @@ function scrollToActive() {
   background: rgba(var(--color-primary-rgb), 0.3);
 }
 
+.thumb-item.marked-keep::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(52, 199, 89, 0.25);
+}
+
 .thumb-label {
   position: absolute;
   bottom: 0;
@@ -117,8 +126,15 @@ function scrollToActive() {
   right: 0;
   font-size: 8px;
   text-align: center;
-  background: rgba(var(--color-danger-rgb), 0.85);
   color: white;
   padding: 1px 0;
+}
+
+.thumb-label.delete {
+  background: rgba(var(--color-danger-rgb), 0.85);
+}
+
+.thumb-label.keep {
+  background: rgba(52, 199, 89, 0.85);
 }
 </style>

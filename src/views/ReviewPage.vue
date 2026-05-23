@@ -54,14 +54,15 @@
     </div>
 
     <!-- 完成弹窗 -->
-    <div v-if="showResult" class="result-overlay" @click="goHome">
+    <div v-if="showResult" class="result-overlay">
       <div class="result-card" @click.stop>
         <div class="result-icon">✅</div>
         <h3>整理完成</h3>
         <p>已移入最近删除 {{ deletedCount }} 张照片</p>
         <p class="freed-space">释放了 {{ formatBytes(freedBytes) }}</p>
         <p class="restore-hint">可在系统相册「最近删除」中恢复</p>
-        <button class="confirm-btn" @click="goHome">完成</button>
+        <button class="confirm-btn primary" @click="continueCleanup">继续清理下一批</button>
+        <button class="confirm-btn secondary" @click="goHome">返回首页</button>
       </div>
     </div>
   </div>
@@ -95,9 +96,10 @@ async function executeDelete() {
 
     // 写入统计记录
     addRecord({
-      date: new Date().toLocaleDateString('zh-CN'),
+      date: new Date().toLocaleString('zh-CN'),
       deletedCount: uris.length,
       movedCount: store.moveList.length,
+      keptCount: store.keepCount,
       freedBytes: bytes,
       durationMs: Date.now() - sessionStart,
     })
@@ -114,6 +116,12 @@ async function executeDelete() {
 function goHome() {
   store.clearAll()
   router.push('/')
+}
+
+function continueCleanup() {
+  // 保留 cleanupConfig，只清除 decisions
+  store.decisions = []
+  router.push('/cleanup/session')
 }
 
 function formatBytes(bytes: number): string {

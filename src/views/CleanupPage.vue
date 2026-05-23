@@ -23,6 +23,7 @@
       :selected-month="store.selectedMonth"
       @back="goBack"
       @month-click="showMonthPicker = true"
+      @review="goReview"
     />
 
     <!-- 中间大图区域 -->
@@ -40,7 +41,7 @@
             draggable="false"
           />
           <div v-if="currentDecision" class="decision-badge" :class="currentDecision.action">
-            {{ currentDecision.action === 'delete' ? '待删除' : `移动到 ${currentDecision.targetAlbum?.name}` }}
+            {{ currentDecision.action === 'delete' ? '待删除' : currentDecision.action === 'keep' ? '保留' : `移动到 ${currentDecision.targetAlbum?.name}` }}
           </div>
         </div>
       </Transition>
@@ -90,6 +91,18 @@
         <p>{{ currentPhoto.filename }}</p>
         <p>{{ formatDate(currentPhoto.createdAt) }}</p>
         <p>{{ formatBytes(currentPhoto.size) }}</p>
+      </div>
+    </div>
+
+    <!-- 退出确认对话框 -->
+    <div v-if="showQuitConfirm" class="quit-overlay" @click="showQuitConfirm = false">
+      <div class="quit-dialog" @click.stop>
+        <h3>放弃本次整理？</h3>
+        <p>已标记的 {{ store.decisions.length }} 条操作将被丢弃</p>
+        <div class="quit-actions">
+          <button class="quit-btn cancel" @click="showQuitConfirm = false">继续整理</button>
+          <button class="quit-btn confirm" @click="confirmQuit">放弃并返回</button>
+        </div>
       </div>
     </div>
   </div>
@@ -156,11 +169,24 @@ onMounted(async () => {
   }
 })
 
+const showQuitConfirm = ref(false)
+
 function goBack() {
-  if (store.deleteCount > 0 || store.moveCount > 0) {
-    router.push('/review')
+  if (store.decisions.length > 0) {
+    showQuitConfirm.value = true
   } else {
     router.push('/')
+  }
+}
+
+function confirmQuit() {
+  store.clearAll()
+  router.push('/')
+}
+
+function goReview() {
+  if (store.deleteCount > 0 || store.moveCount > 0) {
+    router.push('/review')
   }
 }
 
@@ -183,8 +209,9 @@ async function handleMoveToAlbum(album: Album) {
     store.markMove(currentPhoto.value, album)
     showAlbumSheet.value = false
     nextPhoto()
-  } catch (e) {
+  } catch (e: any) {
     console.error('移动失败:', e)
+    debugMsg.value = `移动失败: ${e?.message || e}`
   }
 }
 
@@ -216,6 +243,10 @@ function onTouchEnd(e: TouchEvent) {
   if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
     e.preventDefault()
     if (dx < 0) {
+      // 左滑下一张：自动标记当前照片为保留（若未标记）
+      if (currentPhoto.value) {
+        store.markKeep(currentPhoto.value)
+      }
       slideDirection.value = 'slide-left'
       nextPhoto()
     } else {
@@ -374,6 +405,10 @@ function formatBytes(bytes: number): string {
   background: rgba(var(--color-danger-rgb), 0.85);
 }
 
+.decision-badge.keep {
+  background: rgba(var(--color-success-rgb, 52, 199, 89), 0.85);
+}
+
 .decision-badge.move {
   background: rgba(var(--color-primary-rgb), 0.85);
 }
@@ -406,5 +441,70 @@ function formatBytes(bytes: number): string {
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
   line-height: 1.8;
+}
+
+/* 退出确认对话框 */
+.quit-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: var(--blur-md);
+  -webkit-backdrop-filter: var(--blur-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quit-dialog {
+  background: var(--color-surface-solid);
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl);
+  text-align: center;
+  max-width: 280px;
+  width: 80%;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border);
+}
+
+.quit-dialog h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-sm);
+}
+
+.quit-dialog p {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-lg);
+}
+
+.quit-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.quit-btn {
+  width: 100%;
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  transition: transform var(--transition-fast);
+}
+
+.quit-btn:active {
+  transform: scale(0.98);
+}
+
+.quit-btn.cancel {
+  background: var(--color-primary);
+  color: white;
+}
+
+.quit-btn.confirm {
+  background: var(--color-surface-2);
+  color: var(--color-danger);
 }
 </style>

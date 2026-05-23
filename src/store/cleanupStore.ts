@@ -23,11 +23,21 @@ export const useCleanupStore = defineStore('cleanup', () => {
 
   const deleteList = computed(() => decisions.value.filter(d => d.action === 'delete'))
   const moveList = computed(() => decisions.value.filter(d => d.action === 'move'))
+  const keepList = computed(() => decisions.value.filter(d => d.action === 'keep'))
   const deleteCount = computed(() => deleteList.value.length)
   const moveCount = computed(() => moveList.value.length)
+  const keepCount = computed(() => keepList.value.length)
   const totalSpaceToFree = computed(() =>
     deleteList.value.reduce((sum, d) => sum + d.photo.size, 0)
   )
+
+  function markKeep(photo: Photo) {
+    const existing = decisions.value.find(d => d.photo.id === photo.id)
+    // 不覆盖已有决策（待删除/移动的不会变保留）
+    if (!existing) {
+      decisions.value.push({ photo, action: 'keep' })
+    }
+  }
 
   function markDelete(photo: Photo) {
     const idx = decisions.value.findIndex(d => d.photo.id === photo.id)
@@ -74,9 +84,12 @@ export const useCleanupStore = defineStore('cleanup', () => {
     cleanupConfig,
     deleteList,
     moveList,
+    keepList,
     deleteCount,
     moveCount,
+    keepCount,
     totalSpaceToFree,
+    markKeep,
     markDelete,
     markMove,
     undoLast,
