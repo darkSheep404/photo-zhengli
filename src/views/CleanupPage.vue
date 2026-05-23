@@ -9,6 +9,11 @@
       </div>
     </div>
 
+    <!-- 调试信息浮层 -->
+    <div v-if="debugMsg" class="debug-toast" @click="debugMsg = ''">
+      <pre>{{ debugMsg }}</pre>
+    </div>
+
     <!-- 顶部信息栏 -->
     <ProgressBar
       v-if="!loading"
@@ -115,6 +120,7 @@ const showDetail = ref(false)
 const touchStartX = ref(0)
 const touchStartY = ref(0)
 const slideDirection = ref('slide-left')
+const debugMsg = ref('')
 const scanHint = computed(() => {
   const config = store.cleanupConfig
   if (!config) return '加载全部照片'
@@ -128,14 +134,26 @@ const currentDecision = computed(() => {
 })
 
 onMounted(async () => {
-  await loadAlbums()
-  // Use cleanup config if available, otherwise fallback to default
-  if (store.cleanupConfig) {
-    await loadPhotosWithConfig(store.cleanupConfig)
-  } else {
-    await loadPhotos()
+  try {
+    await loadAlbums()
+    debugMsg.value = `config: ${JSON.stringify(store.cleanupConfig, null, 1)}\n`
+
+    if (store.cleanupConfig) {
+      await loadPhotosWithConfig(store.cleanupConfig)
+    } else {
+      await loadPhotos()
+    }
+
+    debugMsg.value += `loaded: ${photos.value.length} photos\n`
+    if (photos.value.length > 0) {
+      const p = photos.value[0]
+      debugMsg.value += `first: id=${p.id}, uri=${p.uri?.substring(0, 50)}\n`
+      debugMsg.value += `webPath: ${p.webPath?.substring(0, 60)}`
+    }
+    store.setPhotos(photos.value)
+  } catch (e: any) {
+    debugMsg.value = `ERROR: ${e?.message || e}\n${e?.stack || ''}`
   }
-  store.setPhotos(photos.value)
 })
 
 function goBack() {
@@ -225,6 +243,27 @@ function formatBytes(bytes: number): string {
   display: flex;
   flex-direction: column;
   background: var(--color-bg);
+}
+
+/* 调试浮层 */
+.debug-toast {
+  position: fixed;
+  top: 60px;
+  left: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.85);
+  color: #0f0;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  z-index: 9999;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.debug-toast pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 /* 扫描加载 */
