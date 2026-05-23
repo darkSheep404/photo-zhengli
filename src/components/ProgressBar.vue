@@ -40,45 +40,65 @@ const displayMonth = computed(() => {
 .progress-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  padding-top: calc(var(--safe-area-top) + 10px);
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  padding-top: calc(var(--safe-area-top) + var(--space-sm));
   background: var(--color-surface);
+  backdrop-filter: var(--blur-md);
+  -webkit-backdrop-filter: var(--blur-md);
+  border-bottom: 1px solid var(--color-separator);
 }
 
 .nav-btn {
-  font-size: 18px;
-  padding: 4px 8px;
+  font-size: var(--font-size-lg);
+  padding: var(--space-xs) var(--space-sm);
+  color: var(--color-primary);
+  border-radius: var(--radius-sm);
+}
+
+.nav-btn:active {
+  background: var(--color-surface-2);
 }
 
 .progress-text {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
   white-space: nowrap;
 }
 
 .month-btn {
   flex: 1;
   text-align: center;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   background: var(--color-surface-2);
-  padding: 6px 12px;
-  border-radius: 20px;
+  backdrop-filter: var(--blur-sm);
+  -webkit-backdrop-filter: var(--blur-sm);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-full);
+  transition: background var(--transition-fast);
+}
+
+.month-btn:active {
+  background: var(--color-surface-2-solid);
 }
 
 .filter-label {
-  color: var(--color-text-secondary);
-  margin-left: 4px;
+  color: var(--color-text-tertiary);
+  margin-left: var(--space-xs);
 }
 
 .delete-count {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
   white-space: nowrap;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-full);
+  transition: all var(--transition-fast);
 }
 
 .delete-count.active {
-  color: var(--color-danger);
-  font-weight: 600;
+  color: white;
+  background: var(--color-danger);
+  font-weight: var(--font-weight-semibold);
 }
 </style>

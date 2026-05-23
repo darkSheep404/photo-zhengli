@@ -54,7 +54,9 @@ const months = computed(() => {
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: var(--blur-sm);
+  -webkit-backdrop-filter: var(--blur-sm);
   display: flex;
   align-items: flex-end;
 }
@@ -62,12 +64,13 @@ const months = computed(() => {
 .picker {
   width: 100%;
   max-height: 50vh;
-  background: var(--color-surface);
-  border-radius: 20px 20px 0 0;
-  padding: 12px 16px;
-  padding-bottom: calc(var(--safe-area-bottom) + 16px);
+  background: var(--color-surface-solid);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  padding: var(--space-md);
+  padding-bottom: calc(var(--safe-area-bottom) + var(--space-md));
   overflow-y: auto;
-  animation: slideUp 0.25s ease-out;
+  animation: slideUp 0.3s ease-out;
+  box-shadow: var(--shadow-lg);
 }
 
 @keyframes slideUp {
@@ -78,44 +81,52 @@ const months = computed(() => {
 .picker-handle {
   width: 36px;
   height: 4px;
-  background: var(--color-border);
-  border-radius: 2px;
-  margin: 0 auto 12px;
+  background: var(--color-text-tertiary);
+  border-radius: var(--radius-full);
+  margin: 0 auto var(--space-md);
 }
 
 .picker h3 {
-  font-size: 17px;
-  margin-bottom: 16px;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-md);
 }
 
 .month-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
 }
 
 .month-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 12px 8px;
+  gap: var(--space-xs);
+  padding: var(--space-md) var(--space-sm);
   background: var(--color-surface-2);
-  border-radius: 10px;
-  transition: background 0.15s;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  border: 1px solid transparent;
+}
+
+.month-item:active {
+  transform: scale(0.96);
 }
 
 .month-item.active {
   background: var(--color-primary);
+  box-shadow: var(--shadow-glow);
 }
 
 .month-label {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
 }
 
 .month-count {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
 }
 
@@ -125,9 +136,16 @@ const months = computed(() => {
 
 .clear-filter {
   width: 100%;
-  padding: 12px;
+  padding: var(--space-md);
   text-align: center;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+}
+
+.clear-filter:active {
+  background: var(--color-surface-2);
 }
 </style>

@@ -179,7 +179,7 @@ function formatBytes(bytes: number): string {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: 8px;
+  padding: var(--space-sm);
 }
 
 .photo-container {
@@ -192,30 +192,34 @@ function formatBytes(bytes: number): string {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
 }
 
 .decision-badge {
   position: absolute;
-  top: 12px;
-  left: 12px;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
+  top: var(--space-md);
+  left: var(--space-md);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  backdrop-filter: var(--blur-sm);
+  -webkit-backdrop-filter: var(--blur-sm);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .decision-badge.delete {
-  background: rgba(231, 76, 60, 0.85);
+  background: rgba(var(--color-danger-rgb), 0.85);
 }
 
 .decision-badge.move {
-  background: rgba(74, 144, 217, 0.85);
+  background: rgba(var(--color-primary-rgb), 0.85);
 }
 
 .empty-state {
   color: var(--color-text-secondary);
-  font-size: 16px;
+  font-size: var(--font-size-lg);
 }
 
 .detail-overlay {
@@ -236,10 +240,10 @@ function formatBytes(bytes: number): string {
 }
 
 .detail-info {
-  padding: 16px;
+  padding: var(--space-md);
   text-align: center;
   color: var(--color-text-secondary);
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   line-height: 1.8;
 }
 </style>

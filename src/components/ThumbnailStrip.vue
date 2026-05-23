@@ -56,26 +56,28 @@ function scrollToActive() {
 .thumbnail-strip {
   width: 100%;
   overflow: hidden;
-  padding: 8px 0;
+  padding: var(--space-sm) 0;
   background: var(--color-surface);
+  backdrop-filter: var(--blur-sm);
+  -webkit-backdrop-filter: var(--blur-sm);
 }
 
 .strip-inner {
   display: flex;
-  gap: 8px;
-  padding: 0 16px;
-  transition: transform 0.25s ease-out;
+  gap: var(--space-sm);
+  padding: 0 var(--space-md);
+  transition: transform var(--transition-normal);
 }
 
 .thumb-item {
   flex-shrink: 0;
-  width: 60px;
-  height: 60px;
-  border-radius: 6px;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
   border: 2px solid transparent;
   position: relative;
-  transition: border-color 0.15s;
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
 }
 
 .thumb-item img {
@@ -86,6 +88,8 @@ function scrollToActive() {
 
 .thumb-item.active {
   border-color: var(--color-primary);
+  transform: scale(1.08);
+  box-shadow: var(--shadow-glow);
 }
 
 .thumb-item.marked-delete {
@@ -96,14 +100,14 @@ function scrollToActive() {
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(231, 76, 60, 0.4);
+  background: rgba(var(--color-danger-rgb), 0.4);
 }
 
 .thumb-item.marked-move::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(74, 144, 217, 0.3);
+  background: rgba(var(--color-primary-rgb), 0.3);
 }
 
 .thumb-label {
@@ -111,9 +115,9 @@ function scrollToActive() {
   bottom: 0;
   left: 0;
   right: 0;
-  font-size: 9px;
+  font-size: 8px;
   text-align: center;
-  background: rgba(231, 76, 60, 0.8);
+  background: rgba(var(--color-danger-rgb), 0.85);
   color: white;
   padding: 1px 0;
 }

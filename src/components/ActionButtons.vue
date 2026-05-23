@@ -32,26 +32,33 @@ defineEmits<{
   display: flex;
   justify-content: space-around;
   align-items: center;
-  padding: 12px 24px;
-  padding-bottom: calc(var(--safe-area-bottom) + 12px);
+  padding: var(--space-md) var(--space-lg);
+  padding-bottom: calc(var(--safe-area-bottom) + var(--space-md));
   background: var(--color-surface);
+  backdrop-filter: var(--blur-md);
+  -webkit-backdrop-filter: var(--blur-md);
+  border-top: 1px solid var(--color-separator);
 }
 
 .action-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
+  gap: var(--space-xs);
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-full);
   justify-content: center;
   background: var(--color-surface-2);
-  transition: transform 0.15s, opacity 0.15s;
+  backdrop-filter: var(--blur-sm);
+  -webkit-backdrop-filter: var(--blur-sm);
+  transition: transform var(--transition-fast), background var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
 }
 
 .action-btn:active {
-  transform: scale(0.9);
+  transform: scale(0.88);
 }
 
 .action-btn:disabled {
@@ -59,19 +66,21 @@ defineEmits<{
 }
 
 .btn-icon {
-  font-size: 24px;
+  font-size: 22px;
 }
 
 .btn-label {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
 }
 
 .action-btn.delete:active {
-  background: rgba(231, 76, 60, 0.2);
+  background: rgba(var(--color-danger-rgb), 0.3);
+  border-color: var(--color-danger);
 }
 
 .action-btn.add-to:active {
-  background: rgba(74, 144, 217, 0.2);
+  background: rgba(var(--color-primary-rgb), 0.3);
+  border-color: var(--color-primary);
 }
 </style>

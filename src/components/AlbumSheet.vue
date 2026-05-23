@@ -79,7 +79,9 @@ function confirmCreate() {
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: var(--blur-sm);
+  -webkit-backdrop-filter: var(--blur-sm);
   display: flex;
   align-items: flex-end;
 }
@@ -87,12 +89,13 @@ function confirmCreate() {
 .sheet {
   width: 100%;
   max-height: 60vh;
-  background: var(--color-surface);
-  border-radius: 20px 20px 0 0;
-  padding: 12px 16px;
-  padding-bottom: calc(var(--safe-area-bottom) + 16px);
+  background: var(--color-surface-solid);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  padding: var(--space-md);
+  padding-bottom: calc(var(--safe-area-bottom) + var(--space-md));
   overflow-y: auto;
-  animation: slideUp 0.25s ease-out;
+  animation: slideUp 0.3s var(--transition-slow);
+  box-shadow: var(--shadow-lg);
 }
 
 @keyframes slideUp {
@@ -103,32 +106,38 @@ function confirmCreate() {
 .sheet-handle {
   width: 36px;
   height: 4px;
-  background: var(--color-border);
-  border-radius: 2px;
-  margin: 0 auto 12px;
+  background: var(--color-text-tertiary);
+  border-radius: var(--radius-full);
+  margin: 0 auto var(--space-md);
 }
 
 .sheet-title {
-  font-size: 17px;
-  margin-bottom: 16px;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-md);
 }
 
 .create-album-btn {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-md);
   width: 100%;
-  padding: 12px;
+  padding: var(--space-md);
   background: var(--color-surface-2);
-  border-radius: 12px;
-  margin-bottom: 12px;
-  font-size: 15px;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-md);
+  font-size: var(--font-size-md);
+  transition: background var(--transition-fast);
+}
+
+.create-album-btn:active {
+  background: var(--color-surface-2-solid);
 }
 
 .create-icon {
   width: 40px;
   height: 40px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--color-primary);
   color: white;
   display: flex;
@@ -140,16 +149,16 @@ function confirmCreate() {
 .album-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .album-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  transition: background 0.15s;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
 }
 
 .album-item:active {
@@ -159,7 +168,7 @@ function confirmCreate() {
 .album-cover {
   width: 40px;
   height: 40px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--color-surface-2);
   display: flex;
   align-items: center;
@@ -181,52 +190,57 @@ function confirmCreate() {
 }
 
 .album-name {
-  font-size: 15px;
+  font-size: var(--font-size-md);
 }
 
 .album-count {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
 }
 
 .create-dialog {
-  margin-top: 16px;
-  padding: 16px;
+  margin-top: var(--space-md);
+  padding: var(--space-md);
   background: var(--color-surface-2);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
 }
 
 .create-input {
   width: 100%;
-  padding: 10px 12px;
+  padding: var(--space-sm) var(--space-md);
   background: var(--color-bg);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   color: var(--color-text);
-  font-size: 15px;
+  font-size: var(--font-size-md);
+  font-family: var(--font-family);
   outline: none;
-  margin-bottom: 12px;
+  margin-bottom: var(--space-md);
+  transition: border-color var(--transition-fast);
 }
 
 .create-input:focus {
   border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.15);
 }
 
 .create-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
+  gap: var(--space-md);
 }
 
 .create-actions button {
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 14px;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  transition: background var(--transition-fast);
 }
 
 .create-actions .primary {
   background: var(--color-primary);
   color: white;
+  font-weight: var(--font-weight-semibold);
 }
 
 .create-actions .primary:disabled {

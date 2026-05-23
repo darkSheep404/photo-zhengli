@@ -1,18 +1,156 @@
-:root {
-  --color-primary: #4A90D9;
-  --color-danger: #E74C3C;
-  --color-success: #2ECC71;
-  --color-warning: #F39C12;
+/* ===== iOS Theme (Default) ===== */
+:root,
+[data-theme="ios"] {
+  --color-primary: #007AFF;
+  --color-primary-rgb: 0, 122, 255;
+  --color-danger: #FF3B30;
+  --color-danger-rgb: 255, 59, 48;
+  --color-success: #34C759;
+  --color-warning: #FF9500;
   --color-bg: #000000;
-  --color-surface: #1a1a1a;
-  --color-surface-2: #2a2a2a;
+  --color-bg-secondary: #1c1c1e;
+  --color-surface: rgba(28, 28, 30, 0.92);
+  --color-surface-solid: #1c1c1e;
+  --color-surface-2: rgba(44, 44, 46, 0.8);
+  --color-surface-2-solid: #2c2c2e;
   --color-text: #ffffff;
-  --color-text-secondary: #999999;
-  --color-border: #333333;
+  --color-text-secondary: rgba(235, 235, 245, 0.6);
+  --color-text-tertiary: rgba(235, 235, 245, 0.3);
+  --color-border: rgba(84, 84, 88, 0.36);
+  --color-separator: rgba(84, 84, 88, 0.36);
   --safe-area-top: env(safe-area-inset-top, 0px);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* Shape */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-full: 9999px;
+
+  /* Blur */
+  --blur-sm: blur(10px);
+  --blur-md: blur(20px);
+  --blur-lg: blur(40px);
+
+  /* Shadow */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 20px rgba(var(--color-primary-rgb), 0.3);
+
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-md: 15px;
+  --font-size-lg: 17px;
+  --font-size-xl: 22px;
+  --font-size-xxl: 28px;
+  --font-size-hero: 34px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --letter-spacing: 0.02em;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-xxl: 48px;
+
+  /* Animation */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
+  --transition-slow: 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
+/* ===== Pixel Theme ===== */
+[data-theme="pixel"] {
+  --color-primary: #5B8CFF;
+  --color-primary-rgb: 91, 140, 255;
+  --color-danger: #FF4444;
+  --color-danger-rgb: 255, 68, 68;
+  --color-success: #44FF44;
+  --color-warning: #FFAA00;
+  --color-bg: #1a1a2e;
+  --color-bg-secondary: #16213e;
+  --color-surface: #0f3460;
+  --color-surface-solid: #0f3460;
+  --color-surface-2: #1a1a4e;
+  --color-surface-2-solid: #1a1a4e;
+  --color-text: #e0e0ff;
+  --color-text-secondary: #8888bb;
+  --color-text-tertiary: #555580;
+  --color-border: #333366;
+  --color-separator: #333366;
+
+  /* Shape - blocky */
+  --radius-xs: 0px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
+  --radius-xl: 6px;
+  --radius-full: 4px;
+
+  /* No blur for pixel */
+  --blur-sm: none;
+  --blur-md: none;
+  --blur-lg: none;
+
+  /* Pixel shadows */
+  --shadow-sm: 2px 2px 0 #000033;
+  --shadow-md: 3px 3px 0 #000033;
+  --shadow-lg: 4px 4px 0 #000033;
+  --shadow-glow: 0 0 8px rgba(91, 140, 255, 0.5);
+
+  /* Pixel font */
+  --font-family: 'Courier New', 'Consolas', monospace;
+  --font-size-xs: 10px;
+  --font-size-sm: 12px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 20px;
+  --font-size-xxl: 24px;
+  --font-size-hero: 28px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 700;
+  --font-weight-semibold: 700;
+  --font-weight-bold: 700;
+  --letter-spacing: 0.05em;
+
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 20px;
+  --space-xl: 28px;
+  --space-xxl: 40px;
+
+  --transition-fast: 0s;
+  --transition-normal: 0s;
+  --transition-slow: 0s;
+}
+
+/* Pixel theme - image rendering for photos only */
+[data-theme="pixel"] img {
+  image-rendering: pixelated;
+}
+
+[data-theme="pixel"] .action-btn,
+[data-theme="pixel"] .theme-option,
+[data-theme="pixel"] .setting-item,
+[data-theme="pixel"] .stat-card,
+[data-theme="pixel"] .confirm-btn,
+[data-theme="pixel"] .grant-btn,
+[data-theme="pixel"] .month-item {
+  border: 2px solid var(--color-border);
+}
+
+/* ===== Global Reset ===== */
 * {
   margin: 0;
   padding: 0;
@@ -24,11 +162,12 @@ html, body, #app {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--font-family);
   background: var(--color-bg);
   color: var(--color-text);
   user-select: none;
   -webkit-user-select: none;
+  letter-spacing: var(--letter-spacing);
 }
 
 button {
@@ -44,3 +183,19 @@ img {
   display: block;
   max-width: 100%;
 }
+
+/* iOS-style glass card helper */
+.glass {
+  background: var(--color-surface);
+  backdrop-filter: var(--blur-md);
+  -webkit-backdrop-filter: var(--blur-md);
+}
+
+/* Pixel border helper */
+[data-theme="pixel"] .glass {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: var(--color-surface-solid);
+  border: 2px solid var(--color-border);
+}
+
