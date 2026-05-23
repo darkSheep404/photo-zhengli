@@ -42,7 +42,7 @@ jobs:
 
       - name: Build debug APK
         working-directory: android
-        run: ./gradlew assembleDebug
+        run: chmod +x gradlew && ./gradlew assembleDebug
 
       - name: Build release APK
         if: startsWith(github.ref, 'refs/tags/v')
