@@ -94,11 +94,30 @@
           v-for="qty in quantityOptions"
           :key="qty"
           class="qty-chip"
-          :class="{ active: batchSize === qty }"
-          @click="batchSize = qty"
+          :class="{ active: batchSize === qty && !customQty }"
+          @click="batchSize = qty; customQty = false"
         >
           {{ qty }} 张
         </button>
+        <button
+          class="qty-chip"
+          :class="{ active: customQty }"
+          @click="customQty = true"
+        >
+          自定义
+        </button>
+      </div>
+      <div v-if="customQty" class="custom-qty-row">
+        <input
+          v-model.number="customQtyValue"
+          type="number"
+          min="1"
+          max="9999"
+          placeholder="输入数量"
+          class="custom-qty-input"
+          @input="batchSize = Math.max(1, Math.min(9999, customQtyValue || 50))"
+        />
+        <span class="custom-qty-unit">张</span>
       </div>
     </section>
 
@@ -137,6 +156,8 @@ const scope = ref<'all' | 'album' | 'reviewed'>('all')
 const selectedAlbums = ref(new Set<string>())
 const sortOrder = ref<'oldest' | 'newest' | 'random'>('oldest')
 const batchSize = ref(50)
+const customQty = ref(false)
+const customQtyValue = ref(50)
 
 const sortOptions = [
   { value: 'oldest' as const, label: '最旧优先', icon: '📆' },
@@ -367,6 +388,36 @@ function startCleanup() {
   background: var(--color-primary);
   color: white;
   border-color: var(--color-primary);
+}
+
+.custom-qty-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.custom-qty-input {
+  flex: 1;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  font-size: var(--font-size-md);
+  font-family: var(--font-family);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.custom-qty-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.15);
+}
+
+.custom-qty-unit {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
 }
 
 /* Start button */

@@ -9,9 +9,9 @@
       </div>
     </div>
 
-    <!-- 调试信息浮层 -->
-    <div v-if="debugMsg" class="debug-toast" @click="debugMsg = ''">
-      <pre>{{ debugMsg }}</pre>
+    <!-- 浮层提示 -->
+    <div v-if="toastMsg" class="toast-msg" @click="toastMsg = ''">
+      {{ toastMsg }}
     </div>
 
     <!-- 顶部信息栏 -->
@@ -133,12 +133,12 @@ const showDetail = ref(false)
 const touchStartX = ref(0)
 const touchStartY = ref(0)
 const slideDirection = ref('slide-left')
-const debugMsg = ref('')
+const toastMsg = ref('')
 const scanHint = computed(() => {
   const config = store.cleanupConfig
   if (!config) return '加载全部照片'
   const orderMap = { oldest: '最旧优先', newest: '最新优先', random: '随机顺序' }
-  const scope = config.scope === 'album' ? '指定相册' : '全部照片'
+  const scope = config.scope === 'album' ? '指定相册' : config.scope === 'reviewed' ? '已保留照片' : '全部照片'
   return `${scope} · ${orderMap[config.sortOrder]} · ${config.batchSize} 张`
 })
 const currentDecision = computed(() => {
@@ -149,7 +149,6 @@ const currentDecision = computed(() => {
 onMounted(async () => {
   try {
     await loadAlbums()
-    debugMsg.value = `config: ${JSON.stringify(store.cleanupConfig, null, 1)}\n`
 
     if (store.cleanupConfig) {
       await loadPhotosWithConfig(store.cleanupConfig)
@@ -157,15 +156,9 @@ onMounted(async () => {
       await loadPhotos()
     }
 
-    debugMsg.value += `loaded: ${photos.value.length} photos\n`
-    if (photos.value.length > 0) {
-      const p = photos.value[0]
-      debugMsg.value += `first: id=${p.id}, uri=${p.uri?.substring(0, 50)}\n`
-      debugMsg.value += `webPath: ${p.webPath?.substring(0, 60)}`
-    }
     store.setPhotos(photos.value)
   } catch (e: any) {
-    debugMsg.value = `ERROR: ${e?.message || e}\n${e?.stack || ''}`
+    toastMsg.value = `加载失败: ${e?.message || e}`
   }
 })
 
@@ -215,7 +208,7 @@ async function handleMoveToAlbum(album: Album) {
     nextPhoto()
   } catch (e: any) {
     console.error('移动失败:', e)
-    debugMsg.value = `移动失败: ${e?.message || e}`
+    toastMsg.value = `移动失败: ${e?.message || e}`
   }
 }
 
@@ -280,25 +273,19 @@ function formatBytes(bytes: number): string {
   background: var(--color-bg);
 }
 
-/* 调试浮层 */
-.debug-toast {
+/* 浮层提示 */
+.toast-msg {
   position: fixed;
-  top: 60px;
-  left: 8px;
-  right: 8px;
-  background: rgba(0,0,0,0.85);
-  color: #0f0;
-  padding: 10px;
-  border-radius: 8px;
-  font-size: 11px;
+  top: 70px;
+  left: 16px;
+  right: 16px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
   z-index: 9999;
-  max-height: 200px;
-  overflow-y: auto;
-}
-.debug-toast pre {
-  margin: 0;
-  white-space: pre-wrap;
-  word-break: break-all;
+  text-align: center;
 }
 
 /* 扫描加载 */
