@@ -1,7 +1,17 @@
 <template>
   <div class="cleanup-page">
+    <!-- 扫描加载中 -->
+    <div v-if="loading" class="scan-overlay">
+      <div class="scan-box glass">
+        <div class="scan-spinner"></div>
+        <p class="scan-title">正在扫描照片...</p>
+        <p class="scan-hint">{{ scanHint }}</p>
+      </div>
+    </div>
+
     <!-- 顶部信息栏 -->
     <ProgressBar
+      v-if="!loading"
       :current="currentIndex + 1"
       :total="photos.length"
       :delete-count="store.deleteCount"
@@ -11,7 +21,11 @@
     />
 
     <!-- 中间大图区域 -->
-    <div class="photo-area" @click="showDetail = true">
+    <div v-if="!loading" class="photo-area"
+      @touchstart="onTouchStart"
+      @touchend="onTouchEnd"
+      @click="showDetail = true"
+    >
       <div v-if="currentPhoto" class="photo-container">
         <img
           :src="currentPhoto.webPath"
@@ -90,20 +104,34 @@ import MonthPicker from '@/components/MonthPicker.vue'
 
 const router = useRouter()
 const store = useCleanupStore()
-const { photos, currentIndex, currentPhoto, loadPhotos, goToIndex, nextPhoto } = usePhotos()
+const { photos, loading, currentIndex, currentPhoto, loadPhotos, loadPhotosWithConfig, goToIndex, nextPhoto, prevPhoto } = usePhotos()
 const { albums, loadAlbums, createAlbum } = useAlbums()
 
 const showAlbumSheet = ref(false)
 const showMonthPicker = ref(false)
 const showDetail = ref(false)
-
+const touchStartX = ref(0)
+const touchStartY = ref(0)
+const scanHint = computed(() => {
+  const config = store.cleanupConfig
+  if (!config) return '加载全部照片'
+  const orderMap = { oldest: '最旧优先', newest: '最新优先', random: '随机顺序' }
+  const scope = config.scope === 'album' ? '指定相册' : '全部照片'
+  return `${scope} · ${orderMap[config.sortOrder]} · ${config.batchSize} 张`
+})
 const currentDecision = computed(() => {
   if (!currentPhoto.value) return null
   return store.getDecision(currentPhoto.value.id)
 })
 
 onMounted(async () => {
-  await Promise.all([loadPhotos(), loadAlbums()])
+  await loadAlbums()
+  // Use cleanup config if available, otherwise fallback to default
+  if (store.cleanupConfig) {
+    await loadPhotosWithConfig(store.cleanupConfig)
+  } else {
+    await loadPhotos()
+  }
   store.setPhotos(photos.value)
 })
 
@@ -153,6 +181,25 @@ function handleMonthSelect(month: string) {
   showMonthPicker.value = false
 }
 
+function onTouchStart(e: TouchEvent) {
+  touchStartX.value = e.touches[0].clientX
+  touchStartY.value = e.touches[0].clientY
+}
+
+function onTouchEnd(e: TouchEvent) {
+  const dx = e.changedTouches[0].clientX - touchStartX.value
+  const dy = e.changedTouches[0].clientY - touchStartY.value
+  // Only trigger if horizontal swipe > 50px and more horizontal than vertical
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+    e.preventDefault()
+    if (dx < 0) {
+      nextPhoto()
+    } else {
+      prevPhoto()
+    }
+  }
+}
+
 function formatDate(ts: number): string {
   return new Date(ts).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
 }
@@ -171,6 +218,47 @@ function formatBytes(bytes: number): string {
   display: flex;
   flex-direction: column;
   background: var(--color-bg);
+}
+
+/* 扫描加载 */
+.scan-overlay {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scan-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-xxl) var(--space-xl);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+}
+
+.scan-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.scan-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.scan-hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
 }
 
 .photo-area {

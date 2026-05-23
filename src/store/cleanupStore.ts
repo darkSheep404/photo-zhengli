@@ -2,11 +2,24 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Photo, PhotoDecision, Album } from '@/types/photo'
 
+export interface CleanupConfig {
+  scope: 'all' | 'album'
+  albumIds: string[]
+  sortOrder: 'oldest' | 'newest' | 'random'
+  batchSize: number
+}
+
 export const useCleanupStore = defineStore('cleanup', () => {
   const decisions = ref<PhotoDecision[]>([])
   const currentPhotoIndex = ref(0)
   const photos = ref<Photo[]>([])
   const selectedMonth = ref<string>('')
+  const cleanupConfig = ref<CleanupConfig>({
+    scope: 'all',
+    albumIds: [],
+    sortOrder: 'oldest',
+    batchSize: 50,
+  })
 
   const deleteList = computed(() => decisions.value.filter(d => d.action === 'delete'))
   const moveList = computed(() => decisions.value.filter(d => d.action === 'move'))
@@ -58,6 +71,7 @@ export const useCleanupStore = defineStore('cleanup', () => {
     currentPhotoIndex,
     photos,
     selectedMonth,
+    cleanupConfig,
     deleteList,
     moveList,
     deleteCount,

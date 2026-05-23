@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue'
 import { Capacitor } from '@capacitor/core'
 import type { Photo } from '@/types/photo'
+import type { CleanupConfig } from '@/store/cleanupStore'
 
 // On Android, MediaAsset.identifier IS the file path
 
@@ -61,6 +62,96 @@ export function usePhotos() {
     }
   }
 
+  /**
+   * Load photos based on cleanup config (album filter, sort order, batch size)
+   */
+  async function loadPhotosWithConfig(config: CleanupConfig): Promise<void> {
+    loading.value = true
+    try {
+      if (!Capacitor.isNativePlatform()) {
+        let mocks = generateMockPhotos(config.batchSize)
+        mocks = applySortOrder(mocks, config.sortOrder)
+        photos.value = mocks
+        hasMore.value = false
+        return
+      }
+
+      const { Media } = await import('@capacitor-community/media')
+
+      // Determine sort ascending based on config
+      const ascending = config.sortOrder === 'oldest'
+
+      if (config.scope === 'album' && config.albumIds.length > 0) {
+        // Load photos from specified albums
+        const allPhotos: Photo[] = []
+        for (const albumId of config.albumIds) {
+          const result = await Media.getMedias({
+            quantity: config.batchSize,
+            sort: [{ key: 'creationDate', ascending }],
+            types: 'photos',
+            albumIdentifier: albumId,
+          })
+          const medias = result.medias ?? []
+          const mapped = medias.map((m, i) => mapMedia(m, allPhotos.length + i))
+          allPhotos.push(...mapped)
+        }
+        photos.value = applySortOrder(allPhotos, config.sortOrder).slice(0, config.batchSize)
+      } else {
+        // All photos
+        const result = await Media.getMedias({
+          quantity: config.batchSize,
+          sort: [{ key: 'creationDate', ascending }],
+          types: 'photos',
+        })
+        const medias = result.medias ?? []
+        photos.value = medias.map((m, i) => mapMedia(m, i))
+      }
+
+      if (config.sortOrder === 'random') {
+        photos.value = applySortOrder(photos.value, 'random')
+      }
+
+      hasMore.value = photos.value.length >= config.batchSize
+    } finally {
+      loading.value = false
+    }
+  }
+
+  function mapMedia(m: any, index: number): Photo {
+    return {
+      id: m.identifier ?? `photo-${index}`,
+      uri: m.identifier ?? '',
+      webPath: m.data
+        ? `data:image/jpeg;base64,${m.data}`
+        : (m.identifier ? Capacitor.convertFileSrc(m.identifier) : ''),
+      filename: `photo_${index}.jpg`,
+      albumId: '',
+      albumName: '',
+      width: 0,
+      height: 0,
+      size: 0,
+      createdAt: m.creationDate ? new Date(m.creationDate).getTime() : Date.now(),
+      modifiedAt: Date.now(),
+    }
+  }
+
+  function applySortOrder(list: Photo[], order: CleanupConfig['sortOrder']): Photo[] {
+    const sorted = [...list]
+    switch (order) {
+      case 'oldest':
+        return sorted.sort((a, b) => a.createdAt - b.createdAt)
+      case 'newest':
+        return sorted.sort((a, b) => b.createdAt - a.createdAt)
+      case 'random':
+        // Fisher-Yates shuffle
+        for (let i = sorted.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [sorted[i], sorted[j]] = [sorted[j], sorted[i]]
+        }
+        return sorted
+    }
+  }
+
   async function loadMore(): Promise<void> {
     if (!hasMore.value || loading.value) return
     await loadPhotos(100, photos.value.length)
@@ -102,6 +193,7 @@ export function usePhotos() {
     totalCount,
     hasMore,
     loadPhotos,
+    loadPhotosWithConfig,
     loadMore,
     goToIndex,
     nextPhoto,
