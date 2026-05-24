@@ -89,10 +89,31 @@
     <!-- 照片详情 -->
     <div v-if="showDetail && currentPhoto" class="detail-overlay" @click="showDetail = false">
       <img :src="currentPhoto.webPath" class="detail-photo" />
-      <div class="detail-info" @click.stop>
-        <p>{{ currentPhoto.filename }}</p>
-        <p>{{ formatDate(currentPhoto.createdAt) }}</p>
-        <p>{{ formatBytes(currentPhoto.size) }}</p>
+      <div class="detail-info-card" @click.stop>
+        <div class="detail-row detail-filename">
+          <span class="detail-icon">📷</span>
+          <span class="detail-text">{{ currentPhoto.filename }}</span>
+        </div>
+        <div class="detail-meta">
+          <div class="detail-row">
+            <span class="detail-icon">📅</span>
+            <span class="detail-text">{{ formatDate(currentPhoto.createdAt) }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-icon">📐</span>
+            <span class="detail-text">{{ currentPhoto.width }} × {{ currentPhoto.height }}</span>
+          </div>
+        </div>
+        <div class="detail-meta">
+          <div class="detail-row">
+            <span class="detail-icon">💾</span>
+            <span class="detail-text">{{ formatBytes(currentPhoto.size) }}</span>
+          </div>
+          <div v-if="currentPhoto.albumName" class="detail-row">
+            <span class="detail-icon">📁</span>
+            <span class="detail-text">{{ currentPhoto.albumName }}</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -424,16 +445,59 @@ function formatBytes(bytes: number): string {
 
 .detail-photo {
   max-width: 100%;
-  max-height: 80%;
+  max-height: 70%;
   object-fit: contain;
 }
 
-.detail-info {
+.detail-info-card {
+  width: 90%;
+  max-width: 360px;
+  margin-top: var(--space-md);
+  background: rgba(30, 30, 30, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 16px;
   padding: var(--space-md);
-  text-align: center;
-  color: var(--color-text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.detail-filename {
+  padding-bottom: var(--space-xs);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.detail-filename .detail-text {
+  font-weight: 600;
+  color: #fff;
+  word-break: break-all;
+}
+
+.detail-meta {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.detail-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.detail-text {
   font-size: var(--font-size-sm);
-  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.75);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* 退出确认对话框 */
