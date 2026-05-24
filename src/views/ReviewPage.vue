@@ -3,7 +3,7 @@
     <div class="review-header">
       <button class="back-btn" @click="$router.back()">← 返回</button>
       <h2>确认操作</h2>
-      <button class="clear-btn" @click="store.clearAll()">清除全部</button>
+      <span></span>
     </div>
 
     <!-- 删除列表 -->
