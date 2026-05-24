@@ -43,6 +43,7 @@ export interface MediaAccessPluginInterface {
   checkPermissions(): Promise<PermissionResult>
   requestPermissions(): Promise<PermissionResult>
   getPhotos(options: GetPhotosOptions): Promise<GetPhotosResult>
+  getPhotoCount(): Promise<{ count: number }>
   getAlbums(): Promise<GetAlbumsResult>
 }
 

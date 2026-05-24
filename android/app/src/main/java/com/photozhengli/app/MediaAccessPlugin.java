@@ -101,6 +101,30 @@ public class MediaAccessPlugin extends Plugin {
     }
 
     @PluginMethod
+    public void getPhotoCount(PluginCall call) {
+        if (!hasReadPermission()) {
+            call.reject("Storage permission not granted.", "PERMISSION_DENIED");
+            return;
+        }
+        try {
+            ContentResolver resolver = getContext().getContentResolver();
+            Uri collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+            Cursor cursor = resolver.query(collection, new String[]{"COUNT(*) AS count"}, null, null, null);
+            int count = 0;
+            if (cursor != null) {
+                if (cursor.moveToFirst()) count = cursor.getInt(0);
+                cursor.close();
+            }
+            JSObject result = new JSObject();
+            result.put("count", count);
+            call.resolve(result);
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting photo count", e);
+            call.reject("Error getting photo count: " + e.getMessage());
+        }
+    }
+
+    @PluginMethod
     public void getAlbums(PluginCall call) {
         if (!hasReadPermission()) {
             call.reject("Storage permission not granted. Call requestPermissions() first.", "PERMISSION_DENIED");

@@ -95,15 +95,53 @@ export function usePhotos() {
         }
         photos.value = applySortOrder(allPhotos, config.sortOrder).slice(0, config.batchSize)
       } else {
-        const result = await MediaAccessPlugin.getPhotos({
-          quantity: config.batchSize,
-          ascending,
-        })
-        photos.value = (result.photos ?? []).map(p => mapMediaPhoto(p))
+        if (config.sortOrder === 'random') {
+          // 随机模式：分 2~4 段从不同位置抽取，覆盖不同时间段
+          const { count: totalPhotos } = await MediaAccessPlugin.getPhotoCount()
+
+          if (totalPhotos <= config.batchSize) {
+            // 照片总数不够，直接全取
+            const result = await MediaAccessPlugin.getPhotos({
+              quantity: config.batchSize,
+              ascending: false,
+            })
+            photos.value = applySortOrder((result.photos ?? []).map(p => mapMediaPhoto(p)), 'random')
+          } else {
+            // 分 2~4 段随机抽取
+            const chunks = Math.min(2 + Math.floor(Math.random() * 3), Math.ceil(config.batchSize / 2)) // 2~4
+            const perChunk = Math.ceil(config.batchSize / chunks)
+            const collected: Photo[] = []
+            const usedIds = new Set<string>()
+
+            for (let c = 0; c < chunks; c++) {
+              const maxOffset = Math.max(0, totalPhotos - perChunk)
+              const offset = Math.floor(Math.random() * (maxOffset + 1))
+              const need = c < chunks - 1 ? perChunk : config.batchSize - collected.length
+              const result = await MediaAccessPlugin.getPhotos({
+                quantity: need,
+                offset,
+                ascending: false,
+              })
+              for (const p of (result.photos ?? []).map(p => mapMediaPhoto(p))) {
+                if (!usedIds.has(p.id)) {
+                  usedIds.add(p.id)
+                  collected.push(p)
+                }
+              }
+            }
+            photos.value = applySortOrder(collected.slice(0, config.batchSize), 'random')
+          }
+        } else {
+          const result = await MediaAccessPlugin.getPhotos({
+            quantity: config.batchSize,
+            ascending,
+          })
+          photos.value = (result.photos ?? []).map(p => mapMediaPhoto(p))
+        }
       }
 
-      if (config.sortOrder === 'random') {
-        photos.value = applySortOrder(photos.value, 'random')
+      if (config.sortOrder !== 'random' && config.sortOrder !== 'oldest' && config.sortOrder !== 'newest') {
+        // fallback
       }
 
       hasMore.value = photos.value.length >= config.batchSize
