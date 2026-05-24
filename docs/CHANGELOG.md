@@ -1,5 +1,19 @@
 # 照片整理 APP — 开发变更记录
 
+## Batch 5 反馈修复（2026-05-25）
+
+### Bug 修复
+1. **getPhotoCount 鸿蒙兼容**：`COUNT(*) AS count` 投影在鸿蒙系统不支持，改为 `cursor.getCount()`
+2. **已整理照片重复出现**：全部/相册模式下自动排除已保留(reviewed)的照片，避免下次整理重复出现
+3. **整理页默认排序未生效**：`CleanupConfigPage` 中 `sortOrder` 硬编码为 `'oldest'`，改为读取 store 默认值
+
+### UI 改进
+4. **启动页改为 logo**：splash screen 使用 `ic_launcher_foreground` 居中显示，白色背景，添加动画时长 800ms
+5. **首页统计卡片对齐**：`17.8 MB` 等长文本不再换行（`white-space: nowrap` + `min-width: 0`）
+6. **默认排序改为随机**：store 默认 `sortOrder` 从 `'oldest'` 改为 `'random'`
+
+---
+
 ## 项目初始需求（2026-05-23）
 
 ### 核心需求

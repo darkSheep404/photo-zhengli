@@ -154,7 +154,7 @@ const { getReviewedCount } = useReviewedPhotos()
 
 const scope = ref<'all' | 'album' | 'reviewed'>('all')
 const selectedAlbums = ref(new Set<string>())
-const sortOrder = ref<'oldest' | 'newest' | 'random'>('oldest')
+const sortOrder = ref<'oldest' | 'newest' | 'random'>(store.cleanupConfig.sortOrder)
 const batchSize = ref(50)
 const customQty = ref(false)
 const customQtyValue = ref(50)

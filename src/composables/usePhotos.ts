@@ -55,11 +55,11 @@ export function usePhotos() {
       }
 
       const ascending = config.sortOrder === 'oldest'
+      const { getReviewedIds } = useReviewedPhotos()
+      const reviewedIds = getReviewedIds()
 
       if (config.scope === 'reviewed') {
         // 从已保留照片中加载：分页获取设备照片，过滤出已保留的
-        const { getReviewedIds } = useReviewedPhotos()
-        const reviewedIds = getReviewedIds()
         const collected: Photo[] = []
         let offset = 0
         const pageSize = 200
@@ -85,7 +85,6 @@ export function usePhotos() {
       } else if (config.scope === 'album' && config.albumIds.length > 0) {
         const allPhotos: Photo[] = []
         const usedIds = new Set<string>()
-        // 随机模式下多取一些照片（最多3倍），再 shuffle 截取
         const fetchQty = config.sortOrder === 'random' ? config.batchSize * 3 : config.batchSize
         for (const albumId of config.albumIds) {
           const result = await MediaAccessPlugin.getPhotos({
@@ -94,7 +93,7 @@ export function usePhotos() {
             albumId,
           })
           for (const p of (result.photos ?? []).map(p => mapMediaPhoto(p))) {
-            if (!usedIds.has(p.id)) {
+            if (!usedIds.has(p.id) && !reviewedIds.has(p.id)) {
               usedIds.add(p.id)
               allPhotos.push(p)
             }
@@ -103,19 +102,17 @@ export function usePhotos() {
         photos.value = applySortOrder(allPhotos, config.sortOrder).slice(0, config.batchSize)
       } else {
         if (config.sortOrder === 'random') {
-          // 随机模式：分 2~4 段从不同位置抽取，覆盖不同时间段
           const { count: totalPhotos } = await MediaAccessPlugin.getPhotoCount()
 
           if (totalPhotos <= config.batchSize) {
-            // 照片总数不够，直接全取
             const result = await MediaAccessPlugin.getPhotos({
               quantity: config.batchSize,
               ascending: false,
             })
-            photos.value = applySortOrder((result.photos ?? []).map(p => mapMediaPhoto(p)), 'random')
+            const filtered = (result.photos ?? []).map(p => mapMediaPhoto(p)).filter(p => !reviewedIds.has(p.id))
+            photos.value = applySortOrder(filtered, 'random')
           } else {
-            // 分 2~4 段随机抽取
-            const chunks = Math.min(2 + Math.floor(Math.random() * 3), Math.ceil(config.batchSize / 2)) // 2~4
+            const chunks = Math.min(2 + Math.floor(Math.random() * 3), Math.ceil(config.batchSize / 2))
             const perChunk = Math.ceil(config.batchSize / chunks)
             const collected: Photo[] = []
             const usedIds = new Set<string>()
@@ -125,12 +122,12 @@ export function usePhotos() {
               const offset = Math.floor(Math.random() * (maxOffset + 1))
               const need = c < chunks - 1 ? perChunk : config.batchSize - collected.length
               const result = await MediaAccessPlugin.getPhotos({
-                quantity: need,
+                quantity: need + reviewedIds.size,
                 offset,
                 ascending: false,
               })
               for (const p of (result.photos ?? []).map(p => mapMediaPhoto(p))) {
-                if (!usedIds.has(p.id)) {
+                if (!usedIds.has(p.id) && !reviewedIds.has(p.id)) {
                   usedIds.add(p.id)
                   collected.push(p)
                 }
@@ -139,16 +136,30 @@ export function usePhotos() {
             photos.value = applySortOrder(collected.slice(0, config.batchSize), 'random')
           }
         } else {
-          const result = await MediaAccessPlugin.getPhotos({
-            quantity: config.batchSize,
-            ascending,
-          })
-          photos.value = (result.photos ?? []).map(p => mapMediaPhoto(p))
-        }
-      }
+          // 非随机模式：分页获取，跳过已整理过的照片
+          const collected: Photo[] = []
+          let offset = 0
+          const pageSize = Math.max(config.batchSize, 100)
 
-      if (config.sortOrder !== 'random' && config.sortOrder !== 'oldest' && config.sortOrder !== 'newest') {
-        // fallback
+          while (collected.length < config.batchSize) {
+            const result = await MediaAccessPlugin.getPhotos({
+              quantity: pageSize,
+              offset,
+              ascending,
+            })
+            const mapped = (result.photos ?? []).map(p => mapMediaPhoto(p))
+            if (mapped.length === 0) break
+
+            for (const photo of mapped) {
+              if (!reviewedIds.has(photo.id)) {
+                collected.push(photo)
+                if (collected.length >= config.batchSize) break
+              }
+            }
+            offset += pageSize
+          }
+          photos.value = collected
+        }
       }
 
       hasMore.value = photos.value.length >= config.batchSize

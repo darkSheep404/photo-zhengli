@@ -186,6 +186,7 @@ async function requestPerms() {
 
 .stat-card {
   flex: 1;
+  min-width: 0;
   border-radius: var(--radius-lg);
   padding: var(--space-md);
   display: flex;
@@ -197,7 +198,7 @@ async function requestPerms() {
 }
 
 .stat-icon { font-size: 20px; margin-bottom: var(--space-xs); }
-.stat-number { font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--color-primary); line-height: 1; }
+.stat-number { font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--color-primary); line-height: 1; white-space: nowrap; }
 .stat-label { font-size: var(--font-size-xs); color: var(--color-text-secondary); }
 
 .section-label {
