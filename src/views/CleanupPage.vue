@@ -347,7 +347,7 @@ async function openDetail() {
 async function reverseGeocode(lat: number, lng: number): Promise<string> {
   try {
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10&accept-language=zh`,
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=14&accept-language=zh`,
       { headers: { 'User-Agent': 'PhotoZhengli/1.0' } }
     )
     const data = await res.json()
