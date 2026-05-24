@@ -114,15 +114,13 @@
             <span class="detail-text">{{ currentPhoto.albumName }}</span>
           </div>
         </div>
-        <div v-if="exifInfo" class="detail-meta">
-          <div v-if="exifInfo.location" class="detail-row">
-            <span class="detail-icon">📍</span>
-            <span class="detail-text">{{ exifInfo.location }}</span>
-          </div>
-          <div v-if="exifInfo.camera" class="detail-row">
-            <span class="detail-icon">📸</span>
-            <span class="detail-text">{{ exifInfo.camera }}</span>
-          </div>
+        <div v-if="exifInfo && exifInfo.location" class="detail-row">
+          <span class="detail-icon">📍</span>
+          <span class="detail-text">{{ exifInfo.location }}</span>
+        </div>
+        <div v-if="exifInfo && exifInfo.camera" class="detail-row">
+          <span class="detail-icon">📸</span>
+          <span class="detail-text">{{ exifInfo.camera }}</span>
         </div>
         <div v-if="exifLoading" class="detail-meta">
           <div class="detail-row">
