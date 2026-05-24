@@ -39,11 +39,20 @@ export interface PermissionResult {
   granted: boolean
 }
 
+export interface PhotoExifResult {
+  latitude: number | null
+  longitude: number | null
+  dateTime: string | null
+  make: string | null
+  model: string | null
+}
+
 export interface MediaAccessPluginInterface {
   checkPermissions(): Promise<PermissionResult>
   requestPermissions(): Promise<PermissionResult>
   getPhotos(options: GetPhotosOptions): Promise<GetPhotosResult>
   getPhotoCount(): Promise<{ count: number }>
+  getPhotoExif(options: { contentUri: string }): Promise<PhotoExifResult>
   getAlbums(): Promise<GetAlbumsResult>
 }
 

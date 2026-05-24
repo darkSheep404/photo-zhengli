@@ -125,6 +125,58 @@ public class MediaAccessPlugin extends Plugin {
     }
 
     @PluginMethod
+    public void getPhotoExif(PluginCall call) {
+        if (!hasReadPermission()) {
+            call.reject("Storage permission not granted.", "PERMISSION_DENIED");
+            return;
+        }
+        String contentUri = call.getString("contentUri", null);
+        if (contentUri == null || contentUri.isEmpty()) {
+            call.reject("contentUri is required");
+            return;
+        }
+        try {
+            Uri uri = Uri.parse(contentUri);
+            java.io.InputStream is = getContext().getContentResolver().openInputStream(uri);
+            if (is == null) {
+                call.reject("Cannot open photo stream");
+                return;
+            }
+            androidx.exifinterface.media.ExifInterface exif = new androidx.exifinterface.media.ExifInterface(is);
+            JSObject result = new JSObject();
+
+            // GPS
+            double[] latLong = exif.getLatLong();
+            if (latLong != null) {
+                result.put("latitude", latLong[0]);
+                result.put("longitude", latLong[1]);
+            } else {
+                result.put("latitude", JSObject.NULL);
+                result.put("longitude", JSObject.NULL);
+            }
+
+            // Date
+            String dateTime = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_DATETIME_ORIGINAL);
+            if (dateTime == null) {
+                dateTime = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_DATETIME);
+            }
+            result.put("dateTime", dateTime != null ? dateTime : JSObject.NULL);
+
+            // Camera info
+            String make = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_MAKE);
+            String model = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_MODEL);
+            result.put("make", make != null ? make : JSObject.NULL);
+            result.put("model", model != null ? model : JSObject.NULL);
+
+            is.close();
+            call.resolve(result);
+        } catch (Exception e) {
+            Log.e(TAG, "Error reading EXIF", e);
+            call.reject("Error reading EXIF: " + e.getMessage());
+        }
+    }
+
+    @PluginMethod
     public void getAlbums(PluginCall call) {
         if (!hasReadPermission()) {
             call.reject("Storage permission not granted. Call requestPermissions() first.", "PERMISSION_DENIED");

@@ -32,7 +32,7 @@
     <div v-if="!loading" class="photo-area"
       @touchstart="onTouchStart"
       @touchend="onTouchEnd"
-      @click="showDetail = true"
+      @click="openDetail"
     >
       <Transition :name="slideDirection" mode="out-in">
         <div v-if="currentPhoto" :key="currentPhoto.id" class="photo-container">
@@ -114,6 +114,22 @@
             <span class="detail-text">{{ currentPhoto.albumName }}</span>
           </div>
         </div>
+        <div v-if="exifInfo" class="detail-meta">
+          <div v-if="exifInfo.location" class="detail-row">
+            <span class="detail-icon">📍</span>
+            <span class="detail-text">{{ exifInfo.location }}</span>
+          </div>
+          <div v-if="exifInfo.camera" class="detail-row">
+            <span class="detail-icon">📸</span>
+            <span class="detail-text">{{ exifInfo.camera }}</span>
+          </div>
+        </div>
+        <div v-if="exifLoading" class="detail-meta">
+          <div class="detail-row">
+            <span class="detail-icon">⏳</span>
+            <span class="detail-text">读取EXIF...</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -132,12 +148,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePhotos } from '@/composables/usePhotos'
 import { useAlbums } from '@/composables/useAlbums'
 import { useCleanupStore } from '@/store/cleanupStore'
 import { movePhotoToAlbum } from '@/composables/useMovePhoto'
+import { Capacitor } from '@capacitor/core'
+import { MediaAccessPlugin } from '@/plugins/mediaAccess'
 import type { Album } from '@/types/photo'
 import ProgressBar from '@/components/ProgressBar.vue'
 import ThumbnailStrip from '@/components/ThumbnailStrip.vue'
@@ -153,6 +171,9 @@ const { albums, loadAlbums, createAlbum } = useAlbums()
 const showAlbumSheet = ref(false)
 const showMonthPicker = ref(false)
 const showDetail = ref(false)
+const exifInfo = ref<{ location: string; camera: string } | null>(null)
+const exifLoading = ref(false)
+const exifCache = new Map<string, { location: string; camera: string } | null>()
 const touchStartX = ref(0)
 const touchStartY = ref(0)
 const slideDirection = ref('slide-left')
@@ -285,6 +306,60 @@ function formatBytes(bytes: number): string {
   const units = ['B', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(1024))
   return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + units[i]
+}
+
+async function openDetail() {
+  showDetail.value = true
+  if (!currentPhoto.value) return
+  const photo = currentPhoto.value
+  const cached = exifCache.get(photo.id)
+  if (cached !== undefined) {
+    exifInfo.value = cached
+    return
+  }
+  if (!Capacitor.isNativePlatform()) {
+    exifInfo.value = null
+    return
+  }
+  exifLoading.value = true
+  exifInfo.value = null
+  try {
+    const result = await MediaAccessPlugin.getPhotoExif({ contentUri: photo.uri })
+    let location = ''
+    if (result.latitude != null && result.longitude != null) {
+      location = await reverseGeocode(result.latitude, result.longitude)
+    }
+    let camera = ''
+    if (result.make || result.model) {
+      camera = [result.make, result.model].filter(Boolean).join(' ')
+    }
+    const info = (location || camera) ? { location, camera } : null
+    exifCache.set(photo.id, info)
+    if (currentPhoto.value?.id === photo.id) {
+      exifInfo.value = info
+    }
+  } catch {
+    exifCache.set(photo.id, null)
+    exifInfo.value = null
+  } finally {
+    exifLoading.value = false
+  }
+}
+
+async function reverseGeocode(lat: number, lng: number): Promise<string> {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10&accept-language=zh`,
+      { headers: { 'User-Agent': 'PhotoZhengli/1.0' } }
+    )
+    const data = await res.json()
+    const addr = data.address
+    if (!addr) return `${lat.toFixed(4)}, ${lng.toFixed(4)}`
+    // 优先显示城市级别
+    return addr.city || addr.town || addr.county || addr.state || addr.country || `${lat.toFixed(4)}, ${lng.toFixed(4)}`
+  } catch {
+    return `${lat.toFixed(4)}, ${lng.toFixed(4)}`
+  }
 }
 </script>
 
