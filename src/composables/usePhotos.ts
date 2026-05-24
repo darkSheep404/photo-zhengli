@@ -4,6 +4,7 @@ import type { Photo } from '@/types/photo'
 import type { CleanupConfig } from '@/store/cleanupStore'
 import { MediaAccessPlugin } from '@/plugins/mediaAccess'
 import { useReviewedPhotos } from '@/composables/useReviewedPhotos'
+import { useExcludedAlbums } from '@/composables/useExcludedAlbums'
 
 export function usePhotos() {
   const photos = ref<Photo[]>([])
@@ -57,6 +58,11 @@ export function usePhotos() {
       const ascending = config.sortOrder === 'oldest'
       const { getReviewedIds } = useReviewedPhotos()
       const reviewedIds = getReviewedIds()
+      const { getExcludedIds } = useExcludedAlbums()
+      const excludedAlbumIds = config.scope === 'all' ? getExcludedIds() : new Set<string>()
+
+      const shouldSkip = (photo: Photo) =>
+        reviewedIds.has(photo.id) || excludedAlbumIds.has(photo.albumId)
 
       if (config.scope === 'reviewed') {
         // 从已保留照片中加载：分页获取设备照片，过滤出已保留的
@@ -93,7 +99,7 @@ export function usePhotos() {
             albumId,
           })
           for (const p of (result.photos ?? []).map(p => mapMediaPhoto(p))) {
-            if (!usedIds.has(p.id) && !reviewedIds.has(p.id)) {
+            if (!usedIds.has(p.id) && !shouldSkip(p)) {
               usedIds.add(p.id)
               allPhotos.push(p)
             }
@@ -109,7 +115,7 @@ export function usePhotos() {
               quantity: config.batchSize,
               ascending: false,
             })
-            const filtered = (result.photos ?? []).map(p => mapMediaPhoto(p)).filter(p => !reviewedIds.has(p.id))
+            const filtered = (result.photos ?? []).map(p => mapMediaPhoto(p)).filter(p => !shouldSkip(p))
             photos.value = applySortOrder(filtered, 'random')
           } else {
             const chunks = Math.min(2 + Math.floor(Math.random() * 3), Math.ceil(config.batchSize / 2))
@@ -127,7 +133,7 @@ export function usePhotos() {
                 ascending: false,
               })
               for (const p of (result.photos ?? []).map(p => mapMediaPhoto(p))) {
-                if (!usedIds.has(p.id) && !reviewedIds.has(p.id)) {
+                if (!usedIds.has(p.id) && !shouldSkip(p)) {
                   usedIds.add(p.id)
                   collected.push(p)
                 }
@@ -151,7 +157,7 @@ export function usePhotos() {
             if (mapped.length === 0) break
 
             for (const photo of mapped) {
-              if (!reviewedIds.has(photo.id)) {
+              if (!shouldSkip(photo)) {
                 collected.push(photo)
                 if (collected.length >= config.batchSize) break
               }

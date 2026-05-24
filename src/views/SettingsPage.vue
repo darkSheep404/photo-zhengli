@@ -84,10 +84,10 @@
     <!-- 微信二维码弹窗 -->
     <div v-if="showQrCode" class="qr-overlay" @click="showQrCode = false">
       <div class="qr-dialog" @click.stop>
+        <span class="qr-close" @click="showQrCode = false">✕</span>
         <h3 class="qr-title">联系我们</h3>
         <p class="qr-hint">扫描下方二维码添加微信</p>
         <img src="/img/wechat-qr.png" alt="微信二维码" class="qr-image" />
-        <button class="qr-close-btn" @click="showQrCode = false">关闭</button>
       </div>
     </div>
   </div>
@@ -317,16 +317,27 @@ select {
 }
 
 .qr-dialog {
+  position: relative;
   background: var(--color-surface);
   border-radius: var(--radius-xl, 20px);
-  padding: var(--space-xl, 24px);
+  padding: var(--space-md);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--space-xs);
   max-width: 300px;
   width: 85%;
   box-shadow: var(--shadow-lg, 0 8px 32px rgba(0,0,0,0.3));
+}
+
+.qr-close {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  font-size: 18px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  line-height: 1;
 }
 
 .qr-title {
@@ -341,20 +352,8 @@ select {
 }
 
 .qr-image {
-  width: 200px;
-  height: 200px;
-  border-radius: var(--radius-md);
-  margin: var(--space-sm) 0;
-}
-
-.qr-close-btn {
-  width: 100%;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-md);
-  background: var(--color-primary);
-  color: #fff;
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-medium);
-  margin-top: var(--space-sm);
+  width: 220px;
+  height: 220px;
+  margin: var(--space-xs) 0;
 }
 </style>
