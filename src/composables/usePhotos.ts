@@ -84,14 +84,21 @@ export function usePhotos() {
         photos.value = applySortOrder(collected, config.sortOrder)
       } else if (config.scope === 'album' && config.albumIds.length > 0) {
         const allPhotos: Photo[] = []
+        const usedIds = new Set<string>()
+        // 随机模式下多取一些照片（最多3倍），再 shuffle 截取
+        const fetchQty = config.sortOrder === 'random' ? config.batchSize * 3 : config.batchSize
         for (const albumId of config.albumIds) {
           const result = await MediaAccessPlugin.getPhotos({
-            quantity: config.batchSize,
+            quantity: fetchQty,
             ascending,
             albumId,
           })
-          const mapped = (result.photos ?? []).map(p => mapMediaPhoto(p))
-          allPhotos.push(...mapped)
+          for (const p of (result.photos ?? []).map(p => mapMediaPhoto(p))) {
+            if (!usedIds.has(p.id)) {
+              usedIds.add(p.id)
+              allPhotos.push(p)
+            }
+          }
         }
         photos.value = applySortOrder(allPhotos, config.sortOrder).slice(0, config.batchSize)
       } else {
