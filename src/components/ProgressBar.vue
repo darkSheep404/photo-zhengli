@@ -23,6 +23,7 @@ const props = defineProps<{
   deleteCount: number
   hasDecisions: boolean
   selectedMonth: string
+  photoTime: number
 }>()
 
 defineEmits<{
@@ -33,8 +34,11 @@ defineEmits<{
 
 const displayMonth = computed(() => {
   if (props.selectedMonth) return props.selectedMonth
-  const now = new Date()
-  return `${now.getFullYear()}年${now.getMonth() + 1}月`
+  if (props.photoTime) {
+    const d = new Date(props.photoTime)
+    return `${d.getFullYear()}年${d.getMonth() + 1}月`
+  }
+  return ''
 })
 </script>
 

@@ -22,6 +22,7 @@
       :delete-count="store.deleteCount"
       :has-decisions="store.decisions.length > 0"
       :selected-month="store.selectedMonth"
+      :photo-time="currentPhoto?.createdAt ?? 0"
       @back="goBack"
       @month-click="showMonthPicker = true"
       @review="goReview"
