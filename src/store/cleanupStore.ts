@@ -17,7 +17,7 @@ export const useCleanupStore = defineStore('cleanup', () => {
   const cleanupConfig = ref<CleanupConfig>({
     scope: 'all',
     albumIds: [],
-    sortOrder: 'oldest',
+    sortOrder: 'random',
     batchSize: 50,
   })
 

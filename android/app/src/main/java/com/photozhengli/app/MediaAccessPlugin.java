@@ -109,10 +109,10 @@ public class MediaAccessPlugin extends Plugin {
         try {
             ContentResolver resolver = getContext().getContentResolver();
             Uri collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-            Cursor cursor = resolver.query(collection, new String[]{"COUNT(*) AS count"}, null, null, null);
+            Cursor cursor = resolver.query(collection, new String[]{MediaStore.Images.Media._ID}, null, null, null);
             int count = 0;
             if (cursor != null) {
-                if (cursor.moveToFirst()) count = cursor.getInt(0);
+                count = cursor.getCount();
                 cursor.close();
             }
             JSObject result = new JSObject();
