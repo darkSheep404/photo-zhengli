@@ -453,10 +453,11 @@ function formatBytes(bytes: number): string {
   width: 90%;
   max-width: 360px;
   margin-top: var(--space-md);
-  background: rgba(30, 30, 30, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: 16px;
+  background: var(--color-surface);
+  backdrop-filter: var(--blur-md);
+  -webkit-backdrop-filter: var(--blur-md);
+  border-radius: var(--radius-xl, 16px);
+  border: 1px solid var(--color-border);
   padding: var(--space-md);
   display: flex;
   flex-direction: column;
@@ -465,12 +466,12 @@ function formatBytes(bytes: number): string {
 
 .detail-filename {
   padding-bottom: var(--space-xs);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--color-separator);
 }
 
 .detail-filename .detail-text {
-  font-weight: 600;
-  color: #fff;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
   word-break: break-all;
 }
 
@@ -494,7 +495,7 @@ function formatBytes(bytes: number): string {
 
 .detail-text {
   font-size: var(--font-size-sm);
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--color-text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
