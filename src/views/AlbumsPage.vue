@@ -68,7 +68,7 @@ import type { Album } from '@/types/photo'
 const router = useRouter()
 const { albums, loading, loadAlbums } = useAlbums()
 const store = useCleanupStore()
-const { getExcludedAlbums, isExcluded, toggleExclude } = useExcludedAlbums()
+const { getExcludedAlbums, toggleExclude } = useExcludedAlbums()
 
 const excludedList = ref(getExcludedAlbums())
 const toastMsg = ref('')
