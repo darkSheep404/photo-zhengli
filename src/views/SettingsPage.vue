@@ -88,6 +88,8 @@
         <h3 class="qr-title">联系我们</h3>
         <p class="qr-hint">扫描下方二维码添加微信</p>
         <img src="/img/wechat-qr.png" alt="微信二维码" class="qr-image" />
+        <button class="qr-save-btn" @click="saveQrCode">保存到本地</button>
+        <p v-if="saveMsg" class="qr-save-msg">{{ saveMsg }}</p>
       </div>
     </div>
   </div>
@@ -103,6 +105,25 @@ const { getReviewedCount, clearReviewed } = useReviewedPhotos()
 const sortBy = ref('date-desc')
 const reviewedCount = ref(getReviewedCount())
 const showQrCode = ref(false)
+const saveMsg = ref('')
+
+async function saveQrCode() {
+  try {
+    const response = await fetch('/img/wechat-qr.png')
+    const blob = await response.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'wechat-contact.png'
+    a.click()
+    URL.revokeObjectURL(url)
+    saveMsg.value = '✅ 已保存'
+    setTimeout(() => saveMsg.value = '', 2000)
+  } catch {
+    saveMsg.value = '保存失败'
+    setTimeout(() => saveMsg.value = '', 2000)
+  }
+}
 
 function handleClearReviewed() {
   if (reviewedCount.value === 0) return
@@ -352,8 +373,28 @@ select {
 }
 
 .qr-image {
-  width: 220px;
-  height: 220px;
+  width: 90%;
+  max-width: 240px;
   margin: var(--space-xs) 0;
+}
+
+.qr-save-btn {
+  width: 100%;
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  border: 1px solid var(--color-border);
+}
+
+.qr-save-btn:active {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.qr-save-msg {
+  font-size: var(--font-size-xs);
+  color: var(--color-success, #34C759);
 }
 </style>
