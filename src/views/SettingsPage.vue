@@ -74,6 +74,20 @@
           <span>删除机制</span>
           <span class="setting-value">移入最近删除</span>
         </div>
+        <div class="setting-item clickable" @click="showQrCode = true">
+          <span>联系我们 / 反馈问题</span>
+          <span class="setting-value">微信 ›</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 微信二维码弹窗 -->
+    <div v-if="showQrCode" class="qr-overlay" @click="showQrCode = false">
+      <div class="qr-dialog" @click.stop>
+        <h3 class="qr-title">联系我们</h3>
+        <p class="qr-hint">扫描下方二维码添加微信</p>
+        <img src="/img/wechat-qr.png" alt="微信二维码" class="qr-image" />
+        <button class="qr-close-btn" @click="showQrCode = false">关闭</button>
       </div>
     </div>
   </div>
@@ -88,6 +102,7 @@ const { currentTheme, setTheme } = useTheme()
 const { getReviewedCount, clearReviewed } = useReviewedPhotos()
 const sortBy = ref('date-desc')
 const reviewedCount = ref(getReviewedCount())
+const showQrCode = ref(false)
 
 function handleClearReviewed() {
   if (reviewedCount.value === 0) return
@@ -286,5 +301,60 @@ select {
   padding: var(--space-xs) var(--space-md);
   font-size: var(--font-size-sm);
   font-family: var(--font-family);
+}
+
+/* QR Code Dialog */
+.qr-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.qr-dialog {
+  background: var(--color-surface);
+  border-radius: var(--radius-xl, 20px);
+  padding: var(--space-xl, 24px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  max-width: 300px;
+  width: 85%;
+  box-shadow: var(--shadow-lg, 0 8px 32px rgba(0,0,0,0.3));
+}
+
+.qr-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+.qr-hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.qr-image {
+  width: 200px;
+  height: 200px;
+  border-radius: var(--radius-md);
+  margin: var(--space-sm) 0;
+}
+
+.qr-close-btn {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: #fff;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  margin-top: var(--space-sm);
 }
 </style>
