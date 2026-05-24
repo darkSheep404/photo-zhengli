@@ -355,8 +355,11 @@ async function reverseGeocode(lat: number, lng: number): Promise<string> {
     const data = await res.json()
     const addr = data.address
     if (!addr) return `${lat.toFixed(4)}, ${lng.toFixed(4)}`
-    // 优先显示城市级别
-    return addr.city || addr.town || addr.county || addr.state || addr.country || `${lat.toFixed(4)}, ${lng.toFixed(4)}`
+    // 组合城市+区县，如"珠海市香洲区"
+    const city = addr.city || addr.town || ''
+    const district = addr.county || addr.suburb || ''
+    if (city && district) return `${city}${district}`
+    return city || district || addr.state || addr.country || `${lat.toFixed(4)}, ${lng.toFixed(4)}`
   } catch {
     return `${lat.toFixed(4)}, ${lng.toFixed(4)}`
   }
