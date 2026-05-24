@@ -34,7 +34,19 @@
       </div>
     </section>
 
-    <div v-if="!store.deleteList.length && !store.moveList.length" class="empty">
+    <!-- 保留列表 -->
+    <section v-if="store.keepList.length" class="section">
+      <h3 class="section-title">
+        ✅ 已保留 ({{ store.keepList.length }})
+      </h3>
+      <div class="photo-grid">
+        <div v-for="d in store.keepList" :key="d.photo.id" class="grid-item keep">
+          <img :src="d.photo.webPath" :alt="d.photo.filename" />
+        </div>
+      </div>
+    </section>
+
+    <div v-if="!store.deleteList.length && !store.moveList.length && !store.keepList.length" class="empty">
       <p>没有待处理的操作</p>
     </div>
 
@@ -48,6 +60,13 @@
       >
         {{ executing ? '处理中...' : `确认删除 ${store.deleteList.length} 张照片` }}
       </button>
+      <button
+        v-if="!store.deleteList.length"
+        class="confirm-btn primary"
+        @click="finishWithoutDelete"
+      >
+        完成整理
+      </button>
       <button class="confirm-btn secondary" @click="$router.push('/')">
         返回首页
       </button>
@@ -58,9 +77,10 @@
       <div class="result-card" @click.stop>
         <div class="result-icon">✅</div>
         <h3>整理完成</h3>
-        <p>已移入最近删除 {{ deletedCount }} 张照片</p>
-        <p class="freed-space">释放了 {{ formatBytes(freedBytes) }}</p>
-        <p class="restore-hint">可在系统相册「最近删除」中恢复</p>
+        <p v-if="deletedCount > 0">已移入最近删除 {{ deletedCount }} 张照片</p>
+        <p v-if="freedBytes > 0" class="freed-space">释放了 {{ formatBytes(freedBytes) }}</p>
+        <p v-if="deletedCount > 0" class="restore-hint">可在系统相册「最近删除」中恢复</p>
+        <p v-if="deletedCount === 0">本次整理已完成标记</p>
         <button class="confirm-btn primary" @click="continueCleanup">继续清理下一批</button>
         <button class="confirm-btn secondary" @click="goHome">返回首页</button>
       </div>
@@ -122,6 +142,22 @@ function goHome() {
   saveReviewedIds()
   store.clearAll()
   router.push('/')
+}
+
+function finishWithoutDelete() {
+  // 无删除操作时，记录统计并显示完成弹窗
+  addRecord({
+    date: new Date().toLocaleString('zh-CN'),
+    deletedCount: 0,
+    movedCount: store.moveList.length,
+    keptCount: store.keepCount,
+    freedBytes: 0,
+    durationMs: Date.now() - sessionStart,
+  })
+  saveReviewedIds()
+  deletedCount.value = 0
+  freedBytes.value = 0
+  showResult.value = true
 }
 
 function continueCleanup() {
@@ -217,6 +253,11 @@ function formatBytes(bytes: number): string {
 
 .grid-item.delete {
   opacity: 0.7;
+}
+
+.grid-item.keep {
+  border: 2px solid var(--color-success, #34c759);
+  border-radius: var(--radius-sm);
 }
 
 .remove-btn {

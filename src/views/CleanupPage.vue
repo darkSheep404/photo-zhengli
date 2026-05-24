@@ -20,6 +20,7 @@
       :current="currentIndex + 1"
       :total="photos.length"
       :delete-count="store.deleteCount"
+      :has-decisions="store.decisions.length > 0"
       :selected-month="store.selectedMonth"
       @back="goBack"
       @month-click="showMonthPicker = true"
@@ -178,7 +179,7 @@ function confirmQuit() {
 }
 
 function goReview() {
-  if (store.deleteCount > 0 || store.moveCount > 0) {
+  if (store.decisions.length > 0) {
     router.push('/review')
   }
 }

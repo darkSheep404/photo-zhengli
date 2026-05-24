@@ -8,8 +8,8 @@
       {{ displayMonth }}
       <span class="filter-label">| 筛选 ›</span>
     </button>
-    <span class="delete-count" :class="{ active: deleteCount > 0 }" @click="$emit('review')">
-      待删除({{ deleteCount }}) ›
+    <span class="finish-btn" :class="{ active: hasDecisions }" @click="$emit('review')">
+      结束整理 ›
     </span>
   </div>
 </template>
@@ -21,6 +21,7 @@ const props = defineProps<{
   current: number
   total: number
   deleteCount: number
+  hasDecisions: boolean
   selectedMonth: string
 }>()
 
@@ -88,7 +89,7 @@ const displayMonth = computed(() => {
   margin-left: var(--space-xs);
 }
 
-.delete-count {
+.finish-btn {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
   white-space: nowrap;
@@ -98,13 +99,13 @@ const displayMonth = computed(() => {
   cursor: pointer;
 }
 
-.delete-count:active {
+.finish-btn:active {
   opacity: 0.7;
 }
 
-.delete-count.active {
+.finish-btn.active {
   color: white;
-  background: var(--color-danger);
+  background: var(--color-primary);
   font-weight: var(--font-weight-semibold);
 }
 </style>
