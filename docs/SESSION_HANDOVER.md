@@ -17,6 +17,7 @@
 - 最低 SDK 29，目标 SDK 34。
 - 照片读取：自定义 Java `MediaAccessPlugin`，不要用 `@capacitor-community/media` 的读取接口；该依赖仅保留给创建相册。
 - 移动照片：自定义 `MovePhotoPlugin`，通过 Android 11+ 的 `MediaStore.createWriteRequest()` 请求写入权限。
+- 媒体管理权限：`ManageMediaPlugin` 在 Android 12+ 使用 `MediaStore.canManageMedia()` 检测 `MANAGE_MEDIA` 特殊权限，并通过 `Settings.ACTION_REQUEST_MANAGE_MEDIA` 引导用户主动授权。设置页仅在支持的原生设备显示该入口；HarmonyOS 4 需真机验证系统是否授予及是否减少确认。
 - 已保留照片、排除相册、主题等轻量状态使用 `localStorage` 持久化。
 
 ## 主题与 UI 约束
@@ -123,6 +124,7 @@ Set-Location android
 ## 已知风险与待办
 
 - `createTrashRequest` 在 HarmonyOS 4.2 的实际回收站行为仍需真机验证。
+- **未修复 Bug：删除授权结果未回调。** `TrashPhotoPlugin` 启动系统 `createTrashRequest()` 确认框后会立即向前端返回成功；用户在系统弹窗中拒绝时，审核页仍可能显示完成、写入统计并清空删除决策。后续需使用 Activity Result 回调，在收到 `RESULT_OK` 后才 resolve 插件调用；拒绝或取消时应 reject 并保留待删除项。
 - Nominatim 依赖网络，可能限流或不可用；当前失败时仅不展示地点，不阻断详情页。
 - 图片无 GPS EXIF、媒体库未返回 `BUCKET_ID` 等情况会导致缺少地点或相册信息，应优雅降级。
 - PNG 预览异常曾被用户提及，但尚未获得可复现截图/错误日志；目前所有图片统一通过 `Capacitor.convertFileSrc(contentUri)` 显示。

@@ -63,6 +63,17 @@
         </div>
       </div>
 
+      <div v-if="manageMediaSupported" class="setting-section">
+        <h3 class="section-label">删除权限</h3>
+        <button class="setting-item clickable permission-item" :disabled="requestingManageMedia" @click="requestManageMedia">
+          <span>媒体管理权限</span>
+          <span class="setting-value">
+            {{ requestingManageMedia ? '正在打开设置...' : manageMediaGranted ? '已启用' : '未启用 ›' }}
+          </span>
+        </button>
+        <p class="setting-hint">启用后，兼容设备可减少删除照片时的系统确认。</p>
+      </div>
+
       <!-- 关于 -->
       <div class="setting-section">
         <h3 class="section-label">关于</h3>
@@ -96,9 +107,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
+import { Capacitor } from '@capacitor/core'
 import { useTheme } from '@/composables/useTheme'
 import { useReviewedPhotos } from '@/composables/useReviewedPhotos'
+import { getManageMediaStatus, requestManageMediaPermission } from '@/plugins/manageMedia'
 
 const { currentTheme, setTheme } = useTheme()
 const { getReviewedCount, clearReviewed } = useReviewedPhotos()
@@ -106,6 +119,36 @@ const sortBy = ref('date-desc')
 const reviewedCount = ref(getReviewedCount())
 const showQrCode = ref(false)
 const saveMsg = ref('')
+const manageMediaSupported = ref(false)
+const manageMediaGranted = ref(false)
+const requestingManageMedia = ref(false)
+
+onMounted(() => refreshManageMediaStatus())
+
+async function refreshManageMediaStatus() {
+  if (!Capacitor.isNativePlatform()) return
+  try {
+    const status = await getManageMediaStatus()
+    manageMediaSupported.value = status.supported
+    manageMediaGranted.value = status.granted
+  } catch (error) {
+    console.warn('读取媒体管理权限状态失败', error)
+  }
+}
+
+async function requestManageMedia() {
+  if (requestingManageMedia.value) return
+  requestingManageMedia.value = true
+  try {
+    const status = await requestManageMediaPermission()
+    manageMediaSupported.value = status.supported
+    manageMediaGranted.value = status.granted
+  } catch (error) {
+    console.warn('申请媒体管理权限失败', error)
+  } finally {
+    requestingManageMedia.value = false
+  }
+}
 
 async function saveQrCode() {
   try {
@@ -307,6 +350,22 @@ function handleClearReviewed() {
 
 .setting-item.clickable:active {
   background: var(--color-surface-2);
+}
+
+.permission-item {
+  width: 100%;
+  text-align: left;
+}
+
+.permission-item:disabled {
+  opacity: 0.6;
+}
+
+.setting-hint {
+  padding: 0 var(--space-xs);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  line-height: 1.5;
 }
 
 .setting-value {

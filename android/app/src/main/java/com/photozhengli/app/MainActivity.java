@@ -9,6 +9,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(MovePhotoPlugin.class);
         registerPlugin(TrashPhotoPlugin.class);
         registerPlugin(MediaAccessPlugin.class);
+        registerPlugin(ManageMediaPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }
