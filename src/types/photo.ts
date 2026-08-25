@@ -16,6 +16,7 @@ export interface Album {
   id: string
   name: string
   count: number
+  totalSize?: number
   coverUri: string
 }
 

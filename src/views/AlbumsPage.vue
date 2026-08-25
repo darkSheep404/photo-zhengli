@@ -5,8 +5,20 @@
         <h1>📁 相册浏览</h1>
         <p class="albums-subtitle">点击进入整理 · 长按管理是否排除</p>
       </div>
-      <button class="sort-btn" @click="toggleSortMode">
-        {{ sortMode === 'favorites' ? '★ 常用优先' : 'A-Z 名称' }}
+    </div>
+
+    <div class="sort-options" aria-label="相册排列方式">
+      <button class="sort-btn" :class="{ active: favoriteFirst }" @click="favoriteFirst = !favoriteFirst">
+        ★ 常用优先
+      </button>
+      <button class="sort-btn" :class="{ active: sortKey === 'name' }" @click="selectSort('name')">
+        {{ sortKey === 'name' ? (sortDirection === 'asc' ? 'A-Z' : 'Z-A') : 'A-Z' }}
+      </button>
+      <button class="sort-btn" :class="{ active: sortKey === 'count' }" @click="selectSort('count')">
+        {{ sortKey === 'count' ? `张数 ${sortDirection === 'asc' ? '↑' : '↓'}` : '张数' }}
+      </button>
+      <button class="sort-btn" :class="{ active: sortKey === 'size' }" @click="selectSort('size')">
+        {{ sortKey === 'size' ? `大小 ${sortDirection === 'asc' ? '↑' : '↓'}` : '大小' }}
       </button>
     </div>
 
@@ -19,12 +31,79 @@
     </div>
 
     <template v-else>
-      <div class="album-grid">
+      <section v-if="favoriteAlbums.length > 0" class="album-section">
+        <h3 class="section-title">常用相册</h3>
+        <div class="album-grid">
+          <div
+            v-for="album in favoriteAlbums"
+            :key="album.id"
+            class="album-card glass"
+            role="button"
+            tabindex="0"
+            @click="goCleanup(album)"
+            @keydown.enter="goCleanup(album)"
+            @contextmenu.prevent="openExcludeDialog(album)"
+            @touchstart="startLongPress(album)"
+            @touchend="cancelLongPress"
+            @touchmove="cancelLongPress"
+            @touchcancel="cancelLongPress"
+          >
+            <div class="album-icon">📁</div>
+            <div class="album-info">
+              <span class="album-name">{{ album.name }}</span>
+              <span class="album-count">{{ album.count || '—' }} 张 · {{ formatBytes(album.totalSize ?? 0) }}</span>
+            </div>
+            <button class="favorite-btn active" :aria-label="`取消常用 ${album.name}`" @click.stop="toggleAlbumFavorite(album)">★</button>
+            <span class="album-arrow">›</span>
+          </div>
+        </div>
+      </section>
+
+      <section v-if="excludedAlbums.length > 0" class="excluded-section">
+        <button class="excluded-toggle" @click="showExcluded = !showExcluded">
+          <span>已排除相册 ({{ excludedAlbums.length }})</span>
+          <span>{{ showExcluded ? '⌃' : '⌄' }}</span>
+        </button>
+        <div v-if="showExcluded" class="album-grid excluded-grid">
+          <div
+            v-for="album in excludedAlbums"
+            :key="album.id"
+            class="album-card glass excluded"
+            role="button"
+            tabindex="0"
+            @click="goCleanup(album)"
+            @keydown.enter="goCleanup(album)"
+            @contextmenu.prevent="openExcludeDialog(album)"
+            @touchstart="startLongPress(album)"
+            @touchend="cancelLongPress"
+            @touchmove="cancelLongPress"
+            @touchcancel="cancelLongPress"
+          >
+            <div class="album-icon">🚫</div>
+            <div class="album-info">
+              <span class="album-name">{{ album.name }}</span>
+              <span class="album-count">{{ album.count || '—' }} 张 · {{ formatBytes(album.totalSize ?? 0) }}</span>
+            </div>
+            <button
+              class="favorite-btn"
+              :class="{ active: isFavorite(album.id) }"
+              :aria-label="isFavorite(album.id) ? `取消常用 ${album.name}` : `设为常用 ${album.name}`"
+              @click.stop="toggleAlbumFavorite(album)"
+            >
+              {{ isFavorite(album.id) ? '★' : '☆' }}
+            </button>
+            <span class="excluded-badge">已排除</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="album-section">
+        <h3 v-if="favoriteAlbums.length > 0" class="section-title">全部相册</h3>
+        <div class="album-grid">
         <div
-          v-for="album in sortedAlbums"
+          v-for="album in availableAlbums"
           :key="album.id"
           class="album-card glass"
-          :class="{ excluded: checkExcluded(album.id) }"
           role="button"
           tabindex="0"
           @click="goCleanup(album)"
@@ -38,7 +117,7 @@
           <div class="album-icon">{{ checkExcluded(album.id) ? '🚫' : '📁' }}</div>
           <div class="album-info">
             <span class="album-name">{{ album.name }}</span>
-            <span class="album-count">{{ album.count || '—' }} 张</span>
+            <span class="album-count">{{ album.count || '—' }} 张 · {{ formatBytes(album.totalSize ?? 0) }}</span>
           </div>
           <button
             class="favorite-btn"
@@ -48,10 +127,10 @@
           >
             {{ isFavorite(album.id) ? '★' : '☆' }}
           </button>
-          <span v-if="checkExcluded(album.id)" class="excluded-badge">已排除</span>
-          <span v-else class="album-arrow">›</span>
+          <span class="album-arrow">›</span>
         </div>
-      </div>
+        </div>
+      </section>
     </template>
 
     <div v-if="targetAlbum" class="dialog-overlay" @click="closeExcludeDialog">
@@ -94,25 +173,52 @@ const { getFavoriteIds, toggleFavorite } = useFavoriteAlbums()
 const excludedList = ref(getExcludedAlbums())
 const favoriteIds = ref(getFavoriteIds())
 const toastMsg = ref('')
-const sortMode = ref<'favorites' | 'name'>('favorites')
+const favoriteFirst = ref(true)
+type AlbumSortKey = 'name' | 'count' | 'size'
+
+const sortKey = ref<AlbumSortKey>('name')
+const sortDirection = ref<'asc' | 'desc'>('asc')
+const showExcluded = ref(false)
 const targetAlbum = ref<Album | null>(null)
 let longPressTimer: ReturnType<typeof setTimeout> | null = null
 let longPressTriggered = false
 
 onMounted(() => loadAlbums())
 
-const sortedAlbums = computed(() => {
-  const sorted = [...albums.value].sort((left, right) =>
-    left.name.localeCompare(right.name, 'zh-CN')
-  )
-
-  if (sortMode.value === 'name') return sorted
-
-  return sorted.sort((left, right) => {
-    const leftFavorite = favoriteIds.value.has(left.id) ? 1 : 0
-    const rightFavorite = favoriteIds.value.has(right.id) ? 1 : 0
-    return rightFavorite - leftFavorite
+function orderAlbums(list: Album[]): Album[] {
+  const direction = sortDirection.value === 'asc' ? 1 : -1
+  return [...list].sort((left, right) => {
+    if (sortKey.value === 'name') {
+      return direction * left.name.localeCompare(right.name, 'zh-CN')
+    }
+    if (sortKey.value === 'count') {
+      return direction * (left.count - right.count)
+    }
+    return direction * ((left.totalSize ?? 0) - (right.totalSize ?? 0))
   })
+}
+
+function selectSort(key: AlbumSortKey) {
+  if (sortKey.value === key) {
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+    return
+  }
+  sortKey.value = key
+  sortDirection.value = 'asc'
+}
+
+const excludedAlbums = computed(() =>
+  orderAlbums(albums.value.filter(album => checkExcluded(album.id)))
+)
+
+const favoriteAlbums = computed(() => {
+  if (!favoriteFirst.value) return []
+  return orderAlbums(albums.value.filter(album => isFavorite(album.id) && !checkExcluded(album.id)))
+})
+
+const availableAlbums = computed(() => {
+  const list = albums.value.filter(album => !checkExcluded(album.id))
+  return orderAlbums(favoriteFirst.value ? list.filter(album => !isFavorite(album.id)) : list)
 })
 
 function checkExcluded(albumId: string): boolean {
@@ -135,10 +241,6 @@ function goCleanup(album: Album) {
 
 function isFavorite(albumId: string): boolean {
   return favoriteIds.value.has(albumId)
-}
-
-function toggleSortMode() {
-  sortMode.value = sortMode.value === 'favorites' ? 'name' : 'favorites'
 }
 
 function toggleAlbumFavorite(album: Album) {
@@ -180,6 +282,13 @@ function confirmExcludeChange() {
   targetAlbum.value = null
   setTimeout(() => toastMsg.value = '', 2000)
 }
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  const units = ['KB', 'MB', 'GB', 'TB']
+  const unitIndex = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)) - 1, units.length - 1)
+  return `${(bytes / Math.pow(1024, unitIndex + 1)).toFixed(1)} ${units[unitIndex]}`
+}
 </script>
 
 <style scoped>
@@ -210,15 +319,28 @@ function confirmExcludeChange() {
   color: var(--color-text-secondary);
 }
 
+.sort-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin: calc(var(--space-xl) * -0.5) 0 var(--space-xl);
+}
+
 .sort-btn {
   flex-shrink: 0;
   padding: var(--space-xs) var(--space-sm);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background: var(--color-surface);
-  color: var(--color-primary);
+  color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
+}
+
+.sort-btn.active {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
 }
 
 .loading-state, .empty-state {
@@ -231,6 +353,39 @@ function confirmExcludeChange() {
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+}
+
+.album-section {
+  margin-bottom: var(--space-lg);
+}
+
+.section-title {
+  margin: 0 0 var(--space-sm);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.excluded-section {
+  margin-bottom: var(--space-lg);
+}
+
+.excluded-toggle {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  text-align: left;
+}
+
+.excluded-grid {
+  margin-top: var(--space-sm);
 }
 
 .album-card {

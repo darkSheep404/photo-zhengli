@@ -365,7 +365,8 @@ public class MediaAccessPlugin extends Plugin {
         String[] projection = {
             MediaStore.Images.Media.BUCKET_ID,
             MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
-            MediaStore.Images.Media._ID
+            MediaStore.Images.Media._ID,
+            MediaStore.Images.Media.SIZE
         };
 
         Uri collection;
@@ -385,11 +386,13 @@ public class MediaAccessPlugin extends Plugin {
                 int bucketIdCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.BUCKET_ID);
                 int bucketNameCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.BUCKET_DISPLAY_NAME);
                 int idCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
+                int sizeCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.SIZE);
 
-                // First pass: collect album info with counts
+                // Collect album metadata and aggregate each album's image bytes in one scan.
                 java.util.Map<String, JSObject> albumMap = new java.util.LinkedHashMap<>();
                 java.util.Map<String, Integer> countMap = new java.util.LinkedHashMap<>();
                 java.util.Map<String, Long> coverMap = new java.util.LinkedHashMap<>();
+                java.util.Map<String, Long> totalSizeMap = new java.util.LinkedHashMap<>();
 
                 while (cursor.moveToNext()) {
                     String bucketId = cursor.getString(bucketIdCol);
@@ -408,12 +411,14 @@ public class MediaAccessPlugin extends Plugin {
                     }
 
                     countMap.put(bucketId, countMap.getOrDefault(bucketId, 0) + 1);
+                    totalSizeMap.put(bucketId, totalSizeMap.getOrDefault(bucketId, 0L) + cursor.getLong(sizeCol));
                 }
 
                 for (java.util.Map.Entry<String, JSObject> entry : albumMap.entrySet()) {
                     String bucketId = entry.getKey();
                     JSObject album = entry.getValue();
                     album.put("count", countMap.getOrDefault(bucketId, 0));
+                    album.put("totalSize", totalSizeMap.getOrDefault(bucketId, 0L));
 
                     Long coverId = coverMap.get(bucketId);
                     if (coverId != null) {

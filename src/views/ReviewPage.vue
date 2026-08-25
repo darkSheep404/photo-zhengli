@@ -81,8 +81,10 @@
         <p v-if="freedBytes > 0" class="freed-space">释放了 {{ formatBytes(freedBytes) }}</p>
         <p v-if="deletedCount > 0" class="restore-hint">可在系统相册「最近删除」中恢复</p>
         <p v-if="deletedCount === 0">本次整理已完成标记</p>
-        <button class="confirm-btn primary" @click="continueCleanup">继续清理下一批</button>
-        <button class="confirm-btn secondary" @click="goHome">返回首页</button>
+        <div class="result-actions">
+          <button class="confirm-btn primary" @click="continueCleanup">继续清理下一批</button>
+          <button class="confirm-btn secondary" @click="goHome">返回首页</button>
+        </div>
       </div>
     </div>
 
@@ -419,6 +421,13 @@ function formatBytes(bytes: number): string {
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
   margin-bottom: var(--space-lg);
+}
+
+.result-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
 }
 
 .abandon-overlay {

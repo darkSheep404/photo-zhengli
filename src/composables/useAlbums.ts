@@ -21,6 +21,7 @@ export function useAlbums() {
         id: a.id ?? '',
         name: a.name ?? '未知相册',
         count: a.count ?? 0,
+        totalSize: a.totalSize ?? 0,
         coverUri: a.coverUri ? Capacitor.convertFileSrc(a.coverUri) : '',
       }))
     } finally {
@@ -37,6 +38,7 @@ export function useAlbums() {
           id: `album-${Date.now()}`,
           name: name.trim(),
           count: 0,
+          totalSize: 0,
           coverUri: '',
         }
         albums.value.push(newAlbum)
@@ -65,10 +67,10 @@ export function useAlbums() {
 
 function generateMockAlbums(): Album[] {
   return [
-    { id: 'camera', name: '相机', count: 156, coverUri: '' },
-    { id: 'screenshots', name: '截屏', count: 89, coverUri: '' },
-    { id: 'wechat', name: '微信', count: 234, coverUri: '' },
-    { id: 'travel', name: '旅行', count: 67, coverUri: '' },
-    { id: 'food', name: '美食', count: 45, coverUri: '' },
+    { id: 'camera', name: '相机', count: 156, totalSize: 860000000, coverUri: '' },
+    { id: 'screenshots', name: '截屏', count: 89, totalSize: 124000000, coverUri: '' },
+    { id: 'wechat', name: '微信', count: 234, totalSize: 543000000, coverUri: '' },
+    { id: 'travel', name: '旅行', count: 67, totalSize: 389000000, coverUri: '' },
+    { id: 'food', name: '美食', count: 45, totalSize: 201000000, coverUri: '' },
   ]
 }

@@ -17,6 +17,7 @@ export interface MediaAlbum {
   id: string
   name: string
   count: number
+  totalSize: number
   coverUri: string
 }
 
