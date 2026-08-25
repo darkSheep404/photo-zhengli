@@ -68,7 +68,7 @@
         <h3 class="section-label">关于</h3>
         <div class="setting-item">
           <span>版本</span>
-          <span class="setting-value">照片整理 v0.1.0</span>
+          <span class="setting-value">照片整理 v0.1.1</span>
         </div>
         <div class="setting-item">
           <span>删除机制</span>

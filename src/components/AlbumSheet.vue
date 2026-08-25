@@ -9,9 +9,33 @@
         <span>新建相册</span>
       </button>
 
-      <div class="album-list">
+      <section v-if="favoriteAlbums.length > 0" class="album-group">
+        <h4 class="group-title">常用相册</h4>
+        <div class="album-list">
+          <div
+            v-for="album in favoriteAlbums"
+            :key="album.id"
+            class="album-item"
+            @click="$emit('select', album)"
+          >
+            <div class="album-cover">
+              <span v-if="!album.coverUri">📁</span>
+              <img v-else :src="album.coverUri" alt="" />
+            </div>
+            <div class="album-info">
+              <span class="album-name">{{ album.name }}</span>
+              <span class="album-count">{{ album.count }} 张</span>
+            </div>
+            <span class="favorite-mark">★</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="album-group">
+        <h4 v-if="favoriteAlbums.length > 0" class="group-title">全部相册</h4>
+        <div class="album-list">
         <div
-          v-for="album in albums"
+          v-for="album in otherAlbums"
           :key="album.id"
           class="album-item"
           @click="$emit('select', album)"
@@ -25,7 +49,8 @@
             <span class="album-count">{{ album.count }} 张</span>
           </div>
         </div>
-      </div>
+        </div>
+      </section>
 
       <!-- 新建相册对话框 -->
       <div v-if="showCreate" class="create-dialog">
@@ -48,10 +73,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import type { Album } from '@/types/photo'
+import { useFavoriteAlbums } from '@/composables/useFavoriteAlbums'
 
-defineProps<{
+const props = defineProps<{
   albums: Album[]
 }>()
 
@@ -63,6 +89,18 @@ const emit = defineEmits<{
 
 const showCreate = ref(false)
 const newAlbumName = ref('')
+const { getFavoriteIds } = useFavoriteAlbums()
+const favoriteIds = getFavoriteIds()
+
+const sortedAlbums = computed(() =>
+  [...props.albums].sort((left, right) => left.name.localeCompare(right.name, 'zh-CN'))
+)
+const favoriteAlbums = computed(() =>
+  sortedAlbums.value.filter(album => favoriteIds.has(album.id))
+)
+const otherAlbums = computed(() =>
+  sortedAlbums.value.filter(album => !favoriteIds.has(album.id))
+)
 
 function confirmCreate() {
   const name = newAlbumName.value.trim()
@@ -152,6 +190,17 @@ function confirmCreate() {
   gap: 2px;
 }
 
+.album-group + .album-group {
+  margin-top: var(--space-md);
+}
+
+.group-title {
+  margin: 0 0 var(--space-xs) var(--space-xs);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
 .album-item {
   display: flex;
   align-items: center;
@@ -184,6 +233,7 @@ function confirmCreate() {
 }
 
 .album-info {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -196,6 +246,11 @@ function confirmCreate() {
 .album-count {
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
+}
+
+.favorite-mark {
+  color: var(--color-warning);
+  font-size: var(--font-size-lg);
 }
 
 .create-dialog {

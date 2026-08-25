@@ -67,8 +67,8 @@
       >
         完成整理
       </button>
-      <button class="confirm-btn secondary" @click="$router.push('/')">
-        返回首页
+      <button class="confirm-btn secondary" @click="showAbandonConfirm = true">
+        放弃本次整理
       </button>
     </div>
 
@@ -83,6 +83,18 @@
         <p v-if="deletedCount === 0">本次整理已完成标记</p>
         <button class="confirm-btn primary" @click="continueCleanup">继续清理下一批</button>
         <button class="confirm-btn secondary" @click="goHome">返回首页</button>
+      </div>
+    </div>
+
+    <!-- 放弃确认弹窗 -->
+    <div v-if="showAbandonConfirm" class="abandon-overlay" @click="showAbandonConfirm = false">
+      <div class="abandon-dialog" @click.stop>
+        <h3>放弃本次整理？</h3>
+        <p>本次尚未完成的删除、移动和保留标记将被丢弃。</p>
+        <div class="abandon-actions">
+          <button class="confirm-btn secondary" @click="showAbandonConfirm = false">继续整理</button>
+          <button class="confirm-btn danger" @click="confirmAbandon">确认放弃</button>
+        </div>
       </div>
     </div>
   </div>
@@ -103,28 +115,24 @@ const { addReviewedIds } = useReviewedPhotos()
 
 const executing = ref(false)
 const showResult = ref(false)
+const showAbandonConfirm = ref(false)
 const deletedCount = ref(0)
 const freedBytes = ref(0)
 const sessionStart = Date.now()
+const completionRecorded = ref(false)
 
 async function executeDelete() {
+  const deleted = store.deleteList.length
+  const moved = store.moveList.length
+  const kept = store.keepCount
   executing.value = true
   try {
     const uris = store.deleteList.map(d => d.photo.uri)
     const bytes = await trashPhotos(uris)
-    deletedCount.value = uris.length
+    deletedCount.value = deleted
     freedBytes.value = bytes
+    recordCompletion(deleted, moved, kept, bytes)
     showResult.value = true
-
-    // 写入统计记录
-    addRecord({
-      date: new Date().toLocaleString('zh-CN'),
-      deletedCount: uris.length,
-      movedCount: store.moveList.length,
-      keptCount: store.keepCount,
-      freedBytes: bytes,
-      durationMs: Date.now() - sessionStart,
-    })
 
     // 清理已删除的条目
     store.decisions = store.decisions.filter(d => d.action !== 'delete')
@@ -145,19 +153,29 @@ function goHome() {
 }
 
 function finishWithoutDelete() {
-  // 无删除操作时，记录统计并显示完成弹窗
-  addRecord({
-    date: new Date().toLocaleString('zh-CN'),
-    deletedCount: 0,
-    movedCount: store.moveList.length,
-    keptCount: store.keepCount,
-    freedBytes: 0,
-    durationMs: Date.now() - sessionStart,
-  })
+  recordCompletion(0, store.moveList.length, store.keepCount, 0)
   saveReviewedIds()
   deletedCount.value = 0
   freedBytes.value = 0
   showResult.value = true
+}
+
+function recordCompletion(deleted: number, moved: number, kept: number, bytes: number) {
+  if (completionRecorded.value) return
+  completionRecorded.value = true
+  addRecord({
+    date: new Date().toLocaleString('zh-CN'),
+    deletedCount: deleted,
+    movedCount: moved,
+    keptCount: kept,
+    freedBytes: bytes,
+    durationMs: Date.now() - sessionStart,
+  })
+}
+
+function confirmAbandon() {
+  store.clearAll()
+  router.push('/')
 }
 
 function continueCleanup() {
@@ -401,5 +419,49 @@ function formatBytes(bytes: number): string {
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
   margin-bottom: var(--space-lg);
+}
+
+.abandon-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: var(--blur-md);
+  -webkit-backdrop-filter: var(--blur-md);
+}
+
+.abandon-dialog {
+  width: min(100%, 340px);
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-solid);
+  box-shadow: var(--shadow-lg);
+}
+
+.abandon-dialog h3 {
+  margin-bottom: var(--space-sm);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.abandon-dialog p {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+}
+
+.abandon-actions {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+}
+
+.abandon-actions .confirm-btn {
+  font-size: var(--font-size-sm);
 }
 </style>
