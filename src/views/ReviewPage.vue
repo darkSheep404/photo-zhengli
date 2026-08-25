@@ -75,9 +75,10 @@
     <!-- 完成弹窗 -->
     <div v-if="showResult" class="result-overlay">
       <div class="result-card" @click.stop>
-        <div class="result-icon">✅</div>
+        <div class="result-icon">🎉</div>
         <h3>整理完成</h3>
         <p v-if="deletedCount > 0">已移入最近删除 {{ deletedCount }} 张照片</p>
+        <p v-if="organizedCount > 0">已分类 {{ organizedCount }} 张照片</p>
         <p v-if="freedBytes > 0" class="freed-space">释放了 {{ formatBytes(freedBytes) }}</p>
         <p v-if="deletedCount > 0" class="restore-hint">可在系统相册「最近删除」中恢复</p>
         <p v-if="deletedCount === 0">本次整理已完成标记</p>
@@ -119,6 +120,7 @@ const executing = ref(false)
 const showResult = ref(false)
 const showAbandonConfirm = ref(false)
 const deletedCount = ref(0)
+const organizedCount = ref(0)
 const freedBytes = ref(0)
 const sessionStart = Date.now()
 const completionRecorded = ref(false)
@@ -132,6 +134,7 @@ async function executeDelete() {
     const uris = store.deleteList.map(d => d.photo.uri)
     const bytes = await trashPhotos(uris)
     deletedCount.value = deleted
+    organizedCount.value = moved + kept
     freedBytes.value = bytes
     recordCompletion(deleted, moved, kept, bytes)
     showResult.value = true
@@ -155,9 +158,12 @@ function goHome() {
 }
 
 function finishWithoutDelete() {
-  recordCompletion(0, store.moveList.length, store.keepCount, 0)
+  const moved = store.moveList.length
+  const kept = store.keepCount
+  recordCompletion(0, moved, kept, 0)
   saveReviewedIds()
   deletedCount.value = 0
+  organizedCount.value = moved + kept
   freedBytes.value = 0
   showResult.value = true
 }
